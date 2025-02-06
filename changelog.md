@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.1.3 (2025-02-06)
+- Updated the gallery to include the new event levels
+
 ## v1.1.2 (2024-11-20)
 - Changed the background color of the calendar to match the daily/weekly/event level previews
 - Fixed a bug where the refresh button would not load the levels properly ([#5](https://github.com/hiimjustin000/BetterSafe/issues/5))

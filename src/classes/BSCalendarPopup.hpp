@@ -1,4 +1,6 @@
 #include "BSHoverNode.hpp"
+#include <Geode/binding/LevelManagerDelegate.hpp>
+#include <Geode/ui/Popup.hpp>
 
 class BSCalendarPopup : public geode::Popup<cocos2d::CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType>, public LevelManagerDelegate {
 public:
@@ -45,21 +47,8 @@ public:
     void loadLevelsFailed(const char* key, int) override {
         loadLevelsFailed(key);
     }
-    void loadLevelsFailed(const char*) override {
-        m_loadingCircle->setVisible(false);
-        FLAlertLayer::create("Load Failed", "Failed to load safe levels. Please try again later.", "OK")->show();
-    }
+    void loadLevelsFailed(const char*) override;
     void setupPageInfo(gd::string, const char*) override {}
 
     ~BSCalendarPopup() override;
-};
-
-class BSSelectPopup : public geode::Popup<int, int, int, int, int, int, std::function<void(int, int)> const&> {
-protected:
-    int m_year;
-    int m_month;
-
-    bool setup(int, int, int, int, int, int, std::function<void(int, int)> const&) override;
-public:
-    static BSSelectPopup* create(int, int, int, int, int, int, std::function<void(int, int)> const&);
 };

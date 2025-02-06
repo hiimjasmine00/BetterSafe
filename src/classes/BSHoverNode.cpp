@@ -1,8 +1,14 @@
 #include "BSHoverNode.hpp"
+#include <Geode/binding/ButtonSprite.hpp>
+#include <Geode/binding/GJGameLevel.hpp>
+#include <Geode/binding/GameLevelManager.hpp>
+#include <Geode/binding/GameStatsManager.hpp>
+#include <Geode/utils/cocos.hpp>
+#include <Geode/ui/Layout.hpp>
 
 using namespace geode::prelude;
 
-BSHoverNode* BSHoverNode::create(SafeLevel const& level, GJGameLevel* gameLevel, std::function<void()> const& callback) {
+BSHoverNode* BSHoverNode::create(const SafeLevel& level, GJGameLevel* gameLevel, const std::function<void()>& callback) {
     auto ret = new BSHoverNode();
     if (ret->init(level, gameLevel, callback)) {
         ret->autorelease();
@@ -12,7 +18,7 @@ BSHoverNode* BSHoverNode::create(SafeLevel const& level, GJGameLevel* gameLevel,
     return nullptr;
 }
 
-bool BSHoverNode::init(SafeLevel const& level, GJGameLevel* gameLevel, std::function<void()> const& callback) {
+bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std::function<void()>& callback) {
     if (!CCLayer::init()) return false;
 
     setAnchorPoint({ 0.5f, 0.5f });

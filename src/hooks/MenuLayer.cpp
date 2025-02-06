@@ -1,8 +1,8 @@
-#include "BSCalendarPopup.hpp"
+#include "../classes/BSCalendarPopup.hpp"
+#include <Geode/modify/MenuLayer.hpp>
 
 using namespace geode::prelude;
 
-#include <Geode/modify/MenuLayer.hpp>
 class $modify(BSMenuLayer, MenuLayer) {
     struct Fields {
         CCObject* m_dailySafeListener;
@@ -13,21 +13,15 @@ class $modify(BSMenuLayer, MenuLayer) {
         SEL_MenuHandler m_eventSafeSelector;
     };
 
-    static void onModify(auto& self) {
-        if (auto initHookRes = self.getHook("MenuLayer::init")) {
-            auto initHook = initHookRes.unwrap();
-            if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
-                if (overcharged->shouldLoad()) {
-                    initHook->setPriority(INT_MIN / 2);
-                    return;
-                }
-            }
+    static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
+        auto initHook = self.getHook("MenuLayer::init");
+        if (initHook.isErr()) return log::error("Failed to find MenuLayer::init hook: {}", initHook.unwrapErr());
 
-            queueInMainThread([initHook] {
-                if (!initHook->disable()) log::error("Failed to disable MenuLayer::init hook");
-            });
+        if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
+            if (overcharged->shouldLoad()) return (void)self.setHookPriorityAfterPost("MenuLayer::init", overcharged);
         }
-        else log::error("Failed to find MenuLayer::init hook");
+
+        initHook.unwrap()->setAutoEnable(false);
     }
 
     bool init() {
@@ -81,13 +75,5 @@ class $modify(BSMenuLayer, MenuLayer) {
     void onTheEventSafe(CCObject*) {
         auto f = m_fields.self();
         BSCalendarPopup::create(f->m_eventSafeListener, f->m_eventSafeSelector, GJTimedLevelType::Event)->show();
-    }
-};
-
-#include <Geode/modify/DailyLevelPage.hpp>
-class $modify(BSDailyLevelPage, DailyLevelPage) {
-    void onTheSafe(CCObject* sender) {
-        if (sender->getTag() == 91508) DailyLevelPage::onTheSafe(sender);
-        else BSCalendarPopup::create(this, menu_selector(DailyLevelPage::onTheSafe), m_type)->show();
     }
 };

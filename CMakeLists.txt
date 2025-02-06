@@ -3,14 +3,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(GEODE_DISABLE_PRECOMPILED_HEADERS ON)
 
-project(BetterSafe VERSION 1.1.2)
+project(BetterSafe VERSION 1.1.3)
 
 add_library(${PROJECT_NAME} SHARED
+    src/classes/BSCalendarPopup.cpp
+    src/classes/BSHoverNode.cpp
+    src/classes/BSSelectPopup.cpp
+    src/hooks/DailyLevelPage.cpp
+    src/hooks/MenuLayer.cpp
     src/BetterSafe.cpp
-    src/BSCalendarPopup.cpp
-    src/BSHoverNode.cpp
-    src/main.cpp
 )
 
 if (NOT DEFINED ENV{GEODE_SDK})
