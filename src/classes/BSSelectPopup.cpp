@@ -15,20 +15,28 @@ BSSelectPopup* BSSelectPopup::create(int year, int month, int minYear, int minMo
 }
 
 bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int maxYear, int maxMonth, SelectMonthCallback callback) {
+    setID("BSSelectPopup");
     setTitle("Select Date");
-
+    m_title->setID("select-date-title");
+    m_mainLayer->setID("main-layer");
+    m_buttonMenu->setID("button-menu");
+    m_bgSprite->setID("background");
+    m_closeBtn->setID("close-button");
     m_noElasticity = true;
+
     m_year = year;
     m_month = month;
 
     auto monthLabel = CCLabelBMFont::create(BSCalendarPopup::MONTHS[month - 1].c_str(), "bigFont.fnt");
     monthLabel->setScale(0.9f);
     monthLabel->setPosition({ 125.0f, 100.0f });
+    monthLabel->setID("month-label");
     m_mainLayer->addChild(monthLabel);
 
     auto yearLabel = CCLabelBMFont::create(std::to_string(year).c_str(), "bigFont.fnt");
     yearLabel->setScale(0.9f);
     yearLabel->setPosition({ 125.0f, 65.0f });
+    yearLabel->setID("year-label");
     m_mainLayer->addChild(yearLabel);
 
     auto prevMonthButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_arrow_03_001.png", 0.8f, [this, minMonth, minYear, monthLabel, yearLabel](auto) {
@@ -42,6 +50,7 @@ bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int ma
         yearLabel->setString(std::to_string(m_year).c_str());
     });
     prevMonthButton->setPosition({ 25.0f, 100.0f });
+    prevMonthButton->setID("prev-month-button");
     m_buttonMenu->addChild(prevMonthButton);
 
     auto nextMonthButtonSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
@@ -58,6 +67,7 @@ bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int ma
         yearLabel->setString(std::to_string(m_year).c_str());
     });
     nextMonthButton->setPosition({ 225.0f, 100.0f });
+    nextMonthButton->setID("next-month-button");
     m_buttonMenu->addChild(nextMonthButton);
 
     auto prevYearButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_arrow_03_001.png", 0.8f, [this, minMonth, minYear, monthLabel, yearLabel](auto) {
@@ -68,6 +78,7 @@ bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int ma
         yearLabel->setString(std::to_string(m_year).c_str());
     });
     prevYearButton->setPosition({ 25.0f, 65.0f });
+    prevYearButton->setID("prev-year-button");
     m_buttonMenu->addChild(prevYearButton);
 
     auto nextYearButtonSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
@@ -81,6 +92,7 @@ bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int ma
         yearLabel->setString(std::to_string(m_year).c_str());
     });
     nextYearButton->setPosition({ 225.0f, 65.0f });
+    nextYearButton->setID("next-year-button");
     m_buttonMenu->addChild(nextYearButton);
 
     auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [this, callback](auto) {
@@ -88,6 +100,7 @@ bool BSSelectPopup::setup(int year, int month, int minYear, int minMonth, int ma
         onClose(nullptr);
     });
     confirmButton->setPosition({ 125.0f, 25.0f });
+    confirmButton->setID("confirm-button");
     m_buttonMenu->addChild(confirmButton);
 
     handleTouchPriority(this);

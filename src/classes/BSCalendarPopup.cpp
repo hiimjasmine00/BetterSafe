@@ -20,7 +20,13 @@ BSCalendarPopup* BSCalendarPopup::create(CCObject* obj, SEL_MenuHandler onSafe, 
 }
 
 bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelType type) {
+    setID("BSCalendarPopup");
+    m_mainLayer->setID("main-layer");
+    m_buttonMenu->setID("button-menu");
+    m_bgSprite->setID("background");
+    m_closeBtn->setID("close-button");
     m_noElasticity = true;
+
     m_type = type;
 
     if (type == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
@@ -48,6 +54,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     });
     m_prevButton->setPosition({ -34.5f, 140.0f });
     m_prevButton->setVisible(false);
+    m_prevButton->setID("prev-button");
     m_buttonMenu->addChild(m_prevButton);
 
     auto nextButtonSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
@@ -63,6 +70,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     });
     m_nextButton->setPosition({ 334.5f, 140.0f });
     m_nextButton->setVisible(false);
+    m_nextButton->setID("next-button");
     m_buttonMenu->addChild(m_nextButton);
 
     auto firstArrow = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
@@ -77,6 +85,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     });
     m_firstButton->setPosition({ -27.5f, 175.0f });
     m_firstButton->setVisible(false);
+    m_firstButton->setID("first-button");
     m_buttonMenu->addChild(m_firstButton);
 
     auto lastArrow = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
@@ -93,12 +102,14 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     });
     m_lastButton->setPosition({ 327.5f, 175.0f });
     m_lastButton->setVisible(false);
+    m_lastButton->setID("last-button");
     m_buttonMenu->addChild(m_lastButton);
 
     m_calendarMenu = CCMenu::create();
     m_calendarMenu->setPosition({ 150.0f, 140.0f });
     m_calendarMenu->setContentSize({ 300.0f, 280.0f });
     m_calendarMenu->ignoreAnchorPointForPosition(false);
+    m_calendarMenu->setID("calendar-menu");
     m_mainLayer->addChild(m_calendarMenu);
 
     m_monthLabel = CCLabelBMFont::create("", "goldFont.fnt");
@@ -112,16 +123,21 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     });
     m_monthButton->setPosition({ 150.0f, 265.0f });
     m_monthButton->setEnabled(false);
+    m_monthButton->setID("month-button");
     m_buttonMenu->addChild(m_monthButton);
 
     m_loadingCircle = LoadingCircle::create();
-    m_loadingCircle->setParentLayer(this);
+    m_loadingCircle->setParentLayer(m_mainLayer);
+    m_loadingCircle->setContentSize({ 300.0f, 280.0f });
+    m_loadingCircle->m_sprite->setPosition({ 150.0f, 140.0f });
     m_loadingCircle->retain();
     m_loadingCircle->show();
+    m_loadingCircle->setID("loading-circle");
 
     auto safeButton = CCMenuItemSpriteExtra::create(CCSprite::createWithSpriteFrameName("GJ_safeBtn_001.png"), obj, onSafe);
     safeButton->setPosition({ 340.0f, 25.0f });
     safeButton->setTag(91508); // my birthday
+    safeButton->setID("safe-button");
     m_buttonMenu->addChild(safeButton);
 
     auto refreshButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_updateBtn_001.png", 1.0f, [this, type](auto) {
@@ -142,6 +158,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
         });
     });
     refreshButton->setPosition({ 340.0f, 80.0f });
+    refreshButton->setID("refresh-button");
     m_buttonMenu->addChild(refreshButton);
 
     auto dateNow = BetterSafe::dateFromTime(time(0));
@@ -180,6 +197,7 @@ void BSCalendarPopup::createWeekdayLabel(const char* text, int idx) {
     auto label = CCLabelBMFont::create(text, "bigFont.fnt");
     label->setPosition({ idx * 38.0f + 36.0f, 249.0f });
     label->setScale(0.5f);
+    label->setID(fmt::format("{}-label", string::toLower(text)));
     m_mainLayer->addChild(label);
 }
 
@@ -298,6 +316,7 @@ void BSCalendarPopup::setupMonth() {
             m_mainLayer->addChild(m_hoverNode, 200);
         });
         hoverButton->setPosition({ (i + firstWeekday) % 7 * 38.0f + 36.0f, 219.0f - floorf(((float)i + firstWeekday) / 7) * 38.0f });
+        hoverButton->setID(fmt::format("level-button-{}", i + 1));
         m_calendarMenu->addChild(hoverButton);
     }
 }

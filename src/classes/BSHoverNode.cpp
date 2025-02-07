@@ -23,6 +23,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
 
     setAnchorPoint({ 0.5f, 0.5f });
     setContentSize({ 80.0f, 70.0f });
+    setID("BSHoverNode");
     ignoreAnchorPointForPosition(false);
 
     CCTouchDispatcher::get()->registerForcePrio(this, 2);
@@ -34,6 +35,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
     m_background->setPosition({ 40.0f, 35.0f });
     m_background->setColor({ 0, 0, 0 });
     m_background->setOpacity(150);
+    m_background->setID("background");
     addChild(m_background);
 
     auto timedName = "";
@@ -46,16 +48,19 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
     auto dailyLabel = CCLabelBMFont::create(fmt::format("{} #{}", timedName, level.timelyID).c_str(), "goldFont.fnt");
     dailyLabel->setPosition({ 40.0f, 65.0f });
     dailyLabel->setScale(0.3f);
+    dailyLabel->setID("daily-label");
     addChild(dailyLabel);
 
     auto nameLabel = CCLabelBMFont::create(gameLevel->m_levelName.c_str(), "bigFont.fnt");
     nameLabel->setPosition({ 40.0f, 55.0f });
     nameLabel->setScale(0.5f);
+    nameLabel->setID("name-label");
     addChild(nameLabel);
 
     auto creatorLabel = CCLabelBMFont::create(("by " + std::string(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
     creatorLabel->setPosition({ 40.0f, 43.0f });
     creatorLabel->setScale(0.4f);
+    creatorLabel->setID("creator-label");
     addChild(creatorLabel);
 
     setContentWidth(std::max(nameLabel->getScaledContentWidth() + 6.0f, std::max(creatorLabel->getScaledContentWidth() + 6.0f, 80.0f)));
@@ -71,6 +76,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
     starLayout->setContentSize({ 80.0f, 15.0f });
     starLayout->setAnchorPoint({ 0.5f, 0.5f });
     starLayout->setLayout(RowLayout::create()->setGap(1.75f)->setAutoScale(false));
+    starLayout->setID("star-layout");
     addChild(starLayout);
 
     auto gsm = GameStatsManager::get();
@@ -79,9 +85,12 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
     auto levelID = gameLevel->m_levelID.value();
     auto completedLevel = gsm->m_completedLevels->objectForKey(fmt::format("c_{}", levelID).c_str());
     starsLabel->setColor(completedLevel ? ccColor3B { 255, 255, 50 } : ccColor3B { 255, 255, 255 });
+    starsLabel->setID("stars-label");
     starLayout->addChild(starsLabel);
 
-    starLayout->addChild(CCSprite::createWithSpriteFrameName("star_small01_001.png"));
+    auto starSprite = CCSprite::createWithSpriteFrameName("star_small01_001.png");
+    starSprite->setID("star-sprite");
+    starLayout->addChild(starSprite);
 
     auto coinsVerified = gameLevel->m_coinsVerified.value() > 0;
     for (int i = 1; i <= gameLevel->m_coins; i++) {
@@ -90,6 +99,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
         auto coinSprite = CCSprite::createWithSpriteFrameName("usercoin_small01_001.png");
         if (coinsVerified) coinSprite->setColor(hasCoin ? ccColor3B { 255, 255, 255 } : ccColor3B { 165, 165, 165 });
         else coinSprite->setColor(hasCoin ? ccColor3B { 255, 175, 75 } : ccColor3B { 165, 113, 48 });
+        coinSprite->setID(fmt::format("coin-sprite-{}", i).c_str());
         starLayout->addChild(coinSprite);
     }
 
@@ -97,16 +107,20 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, const std
 
     auto viewMenu = CCMenu::create();
     viewMenu->setPosition({ getContentWidth() / 2, 12.0f });
+    viewMenu->setID("view-menu");
     addChild(viewMenu);
 
     auto viewSprite = ButtonSprite::create("View", "goldFont.fnt", "GJ_button_01.png", 0.8f);
     viewSprite->setScale(0.7f);
-    viewMenu->addChild(CCMenuItemExt::createSpriteExtra(viewSprite, [this, gameLevel](auto) {
+    auto viewButton = CCMenuItemExt::createSpriteExtra(viewSprite, [this, gameLevel](auto) {
         GameLevelManager::get()->gotoLevelPage(gameLevel);
-    }));
+    });
+    viewButton->setID("view-button");
+    viewMenu->addChild(viewButton);
 
     auto closeButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_closeBtn_001.png", 0.5f, [this] (auto) { close(); });
     closeButton->setPosition(viewMenu->convertToNodeSpace(convertToWorldSpace({ 0.0f, 70.0f })));
+    closeButton->setID("close-button");
     viewMenu->addChild(closeButton);
 
     setTouchEnabled(true);

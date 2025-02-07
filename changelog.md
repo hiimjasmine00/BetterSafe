@@ -1,5 +1,6 @@
 # Better Safe Changelog
-## v1.1.3 (2025-02-06)
+## v1.1.3 (2025-02-07)
+- Added node IDs to the popups
 - Updated the gallery to include the new event levels
 
 ## v1.1.2 (2024-11-20)
