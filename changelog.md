@@ -3,6 +3,7 @@
 - Redesigned the hover previews to be more compact
 - Changed the background color of the month selection popup to match the daily/weekly/event level previews
 - Added particles to mythic rated levels
+- Added completion icons to completed levels ([#3](https://github.com/hiimjasmine00/BetterSafe/issues/3))
 
 ## v1.1.3 (2025-02-07)
 - Added node IDs to the popups

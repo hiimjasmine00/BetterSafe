@@ -21,6 +21,7 @@ protected:
     CCMenuItemSpriteExtra* m_nextButton;
     CCMenuItemSpriteExtra* m_firstButton;
     CCMenuItemSpriteExtra* m_lastButton;
+    bool m_initialized;
 
     bool setup(CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType) override;
 
@@ -39,6 +40,7 @@ public:
     int getMinMonth() const { return m_minMonth; }
     int getMaxMonth() const { return m_maxMonth; }
 
+    void onEnter() override;
     void loadLevelsFinished(cocos2d::CCArray*, const char*, int) override;
     void loadLevelsFailed(const char*, int) override;
 

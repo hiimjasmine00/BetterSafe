@@ -1,6 +1,7 @@
 #include "BSCalendarPopup.hpp"
 #include "BSSelectPopup.hpp"
 #include <Geode/binding/GameLevelManager.hpp>
+#include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GameToolbox.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/GJSearchObject.hpp>
@@ -137,6 +138,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
 
     handleTouchPriority(this);
     loadSafe();
+    queueInMainThread([this] { m_initialized = true; });
 
     return true;
 }
@@ -218,6 +220,21 @@ void BSCalendarPopup::loadLevelsFailed(const char*, int) {
     m_loadingCircle->setVisible(false);
     FLAlertLayer::create("Load Failed", "Failed to load safe levels. Please try again later.", "OK")->show();
 }
+
+void BSCalendarPopup::onEnter() {
+    CCLayer::onEnter();
+    if (m_initialized) loadMonth(m_year, m_month);
+}
+
+#ifndef GEODE_IS_WINDOWS
+// TODO: Find CCParticleSystem members so that I don't have to do this mess
+void CCParticleSystemQuad::setOpacity(uint8_t opacity) {
+    GEODE_ANDROID64(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x32e) = opacity);
+    GEODE_ANDROID32(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x2d6) = opacity);
+    GEODE_MACOS(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x342) = opacity);
+    GEODE_IOS(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x342) = opacity);
+}
+#endif
 
 void BSCalendarPopup::setupMonth(CCArray* levels) {
     m_monthButton->setEnabled(true);
@@ -311,8 +328,11 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             }
         }
 
+        auto completedLevel = GameStatsManager::get()->hasCompletedLevel(gameLevel);
+
         auto diffIcon = CCSprite::createWithSpriteFrameName(diffFrame.c_str());
         diffIcon->setScale(0.75f);
+        diffIcon->setOpacity(255 - (completedLevel * 105));
 
         if (gameLevel->m_featured > 0) {
             auto featureFrame = "";
@@ -325,6 +345,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             if (auto featureIcon = CCSprite::createWithSpriteFrameName(featureFrame)) {
                 featureIcon->setPosition(diffIcon->getContentSize() / 2.0f + CCPoint { 0.0f, -5.5f });
                 if (hasBetweenDemon) featureIcon->setPositionY(9.5f);
+                featureIcon->setOpacity(255 - (completedLevel * 105));
                 diffIcon->addChild(featureIcon, -2);
                 if (gameLevel->m_isEpic == 3) {
                     auto mythicParticles = GameToolbox::particleFromString(
@@ -334,6 +355,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                     );
                     mythicParticles->setPosition(featureIcon->getPosition());
                     mythicParticles->setScale(0.9f);
+                    mythicParticles->setOpacity(255 - (completedLevel * 105));
                     mythicParticles->resetSystem();
                     diffIcon->addChild(mythicParticles, -1);
                     for (int i = 0; i < 5; i++) {
@@ -341,6 +363,12 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                     }
                 }
             }
+        }
+
+        if (completedLevel) {
+            auto completedIcon = CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
+            completedIcon->setPosition(diffIcon->getContentSize() / 2.0f);
+            diffIcon->addChild(completedIcon, 1);
         }
 
         auto hoverButton = CCMenuItemExt::createSpriteExtra(diffIcon, [this, gameLevel, safeLevel](CCMenuItemSpriteExtra* sender) {

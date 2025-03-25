@@ -99,11 +99,10 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     addChild(starLayout);
 
     auto gsm = GameStatsManager::get();
-    auto levelID = gameLevel->m_levelID.value();
 
     auto starsLabel = CCLabelBMFont::create(std::to_string(gameLevel->m_stars.value()).c_str(), "bigFont.fnt");
     starsLabel->setScale(0.4f);
-    starsLabel->setColor({ 255, 255, (uint8_t)(255 - gsm->hasCompletedOnlineLevel(levelID) * 205) });
+    starsLabel->setColor({ 255, 255, (uint8_t)(255 - gsm->hasCompletedLevel(gameLevel) * 205) });
     starsLabel->setID("stars-label");
     starLayout->addChild(starsLabel);
 
@@ -111,6 +110,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     starSprite->setID("star-sprite");
     starLayout->addChild(starSprite);
 
+    auto levelID = gameLevel->m_levelID.value();
     auto coinsVerified = gameLevel->m_coinsVerified.value() > 0;
     for (int i = 1; i <= gameLevel->m_coins; i++) {
         auto coinStr = fmt::format("{}_{}", levelID, i);
