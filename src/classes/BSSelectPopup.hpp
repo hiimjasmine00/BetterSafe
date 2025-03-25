@@ -1,13 +1,20 @@
 #include <Geode/ui/Popup.hpp>
 
-using SelectMonthCallback = const std::function<void(int, int)>&;
+class BSCalendarPopup;
 
-class BSSelectPopup : public geode::Popup<int, int, int, int, int, int, SelectMonthCallback> {
+using SelectMonthCallback = std::function<void(int, int)>;
+
+class BSSelectPopup : public geode::Popup<BSCalendarPopup*, SelectMonthCallback> {
 protected:
     int m_year;
     int m_month;
 
-    bool setup(int, int, int, int, int, int, SelectMonthCallback) override;
+    bool setup(BSCalendarPopup*, SelectMonthCallback) override;
 public:
-    static BSSelectPopup* create(int, int, int, int, int, int, SelectMonthCallback);
+    inline static constexpr std::array MONTHS = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    static BSSelectPopup* create(BSCalendarPopup*, SelectMonthCallback);
 };

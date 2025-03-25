@@ -1,15 +1,15 @@
 #include "../BetterSafe.hpp"
 #include <cocos2d.h>
-#include <cocos-ext.h>
+
+using HoverCallback = std::function<void()>;
 
 class BSHoverNode : public cocos2d::CCLayer {
 protected:
-    cocos2d::extension::CCScale9Sprite* m_background;
-    std::function<void()> m_callback;
+    HoverCallback m_callback;
 
-    bool init(const SafeLevel&, GJGameLevel*, const std::function<void()>&);
+    bool init(const SafeLevel&, GJGameLevel*, HoverCallback);
 public:
-    static BSHoverNode* create(const SafeLevel&, GJGameLevel*, const std::function<void()>&);
+    static BSHoverNode* create(const SafeLevel&, GJGameLevel*, HoverCallback);
 
     void close();
     void keyBackClicked() override;

@@ -14,14 +14,35 @@ class $modify(BSMenuLayer, MenuLayer) {
     };
 
     static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
-        auto initHook = self.getHook("MenuLayer::init");
-        if (initHook.isErr()) return log::error("Failed to find MenuLayer::init hook: {}", initHook.unwrapErr());
+        auto initHook = self.getHook("MenuLayer::init").mapErr([](const std::string& err) {
+            return log::error("Failed to get MenuLayer::init hook: {}", err), err;
+        }).unwrapOr(nullptr);
+        if (!initHook) return;
+
+        initHook->setAutoEnable(false);
 
         if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
-            if (overcharged->shouldLoad()) return (void)self.setHookPriorityAfterPost("MenuLayer::init", overcharged);
-        }
+            auto func = [overcharged, initHook]() {
+                auto address = initHook->getAddress();
+                auto modHooks = overcharged->getHooks();
+                auto modHook = std::ranges::find_if(modHooks, [address](Hook* hook) { return hook->getAddress() == address; });
+                if (modHook == modHooks.end()) return log::error("Failed to find MenuLayer::init hook in ninxout.redash");
 
-        initHook.unwrap()->setAutoEnable(false);
+                auto hookPriority = (*modHook)->getPriority();
+                if (initHook->getPriority() >= hookPriority) initHook->setPriority(hookPriority - 1);
+            };
+
+            if (overcharged->isEnabled()) {
+                initHook->setAutoEnable(true);
+                func();
+            }
+            else new EventListener([func = std::move(func), initHook](auto) {
+                func();
+                (void)initHook->enable().mapErr([](const std::string& err) {
+                    return log::error("Failed to enable MenuLayer::init hook: {}", err), err;
+                });
+            }, ModStateFilter(overcharged, ModEventType::Loaded));
+        }
     }
 
     bool init() {
@@ -36,24 +57,21 @@ class $modify(BSMenuLayer, MenuLayer) {
         auto f = m_fields.self();
 
         auto dailyNode = dailiesMenu->getChildByID("daily-node");
-        auto dailySafeButton = static_cast<CCMenuItemSpriteExtra*>(dailyNode ? dailyNode->getChildByIDRecursive("safe-button") : nullptr);
-        if (dailyNode && dailySafeButton) {
+        if (auto dailySafeButton = static_cast<CCMenuItem*>(dailyNode ? dailyNode->getChildByIDRecursive("safe-button") : nullptr)) {
             f->m_dailySafeListener = dailySafeButton->m_pListener;
             f->m_dailySafeSelector = dailySafeButton->m_pfnSelector;
             dailySafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheDailySafe));
         }
 
         auto weeklyNode = dailiesMenu->getChildByID("weekly-node");
-        auto weeklySafeButton = static_cast<CCMenuItemSpriteExtra*>(weeklyNode ? weeklyNode->getChildByIDRecursive("safe-button") : nullptr);
-        if (weeklyNode && weeklySafeButton) {
+        if (auto weeklySafeButton = static_cast<CCMenuItem*>(weeklyNode ? weeklyNode->getChildByIDRecursive("safe-button") : nullptr)) {
             f->m_weeklySafeListener = weeklySafeButton->m_pListener;
             f->m_weeklySafeSelector = weeklySafeButton->m_pfnSelector;
             weeklySafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheWeeklySafe));
         }
 
         auto eventNode = dailiesMenu->getChildByID("event-node");
-        auto eventSafeButton = static_cast<CCMenuItemSpriteExtra*>(eventNode ? eventNode->getChildByIDRecursive("safe-button") : nullptr);
-        if (eventNode && eventSafeButton) {
+        if (auto eventSafeButton = static_cast<CCMenuItem*>(eventNode ? eventNode->getChildByIDRecursive("safe-button") : nullptr)) {
             f->m_eventSafeListener = eventSafeButton->m_pListener;
             f->m_eventSafeSelector = eventSafeButton->m_pfnSelector;
             eventSafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheEventSafe));
