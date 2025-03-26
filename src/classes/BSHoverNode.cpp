@@ -65,18 +65,18 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
 
     auto nameLabel = CCLabelBMFont::create(gameLevel->m_levelName.c_str(), "bigFont.fnt");
     nameLabel->setScale(0.5f);
-    auto nameButton = CCMenuItemExt::createSpriteExtra(nameLabel, [gameLevel](auto) { GameLevelManager::get()->gotoLevelPage(gameLevel); });
+    auto nameButton = CCMenuItemExt::createSpriteExtra(nameLabel, [this, gameLevel](auto) {
+        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder()) GameLevelManager::get()->gotoLevelPage(gameLevel);
+    });
     nameButton->setPosition({ 0.0f, 35.0f });
     nameButton->setID("name-button");
     viewMenu->addChild(nameButton);
 
     auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", GEODE_ANDROID(std::string)(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
     creatorLabel->setScale(0.4f);
-    auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [gameLevel](auto) {
-        if (gameLevel->m_accountID.value() > 0) {
-            GameManager::get()->setGameVariable("0047", true);
-            ProfilePage::create(gameLevel->m_accountID.value(), false)->show();
-        }
+    auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [this, gameLevel](auto) {
+        auto accountID = gameLevel->m_accountID.value();
+        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0) ProfilePage::create(accountID, false)->show();
     });
     creatorButton->setPosition({ 0.0f, 23.0f });
     creatorButton->setID("creator-button");
@@ -106,7 +106,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     starsLabel->setID("stars-label");
     starLayout->addChild(starsLabel);
 
-    auto starSprite = CCSprite::createWithSpriteFrameName("star_small01_001.png");
+    auto starSprite = CCSprite::createWithSpriteFrameName(gameLevel->m_levelLength == 5 ? "moon_small01_001.png" : "star_small01_001.png");
     starSprite->setID("star-sprite");
     starLayout->addChild(starSprite);
 
@@ -150,8 +150,6 @@ void BSHoverNode::registerWithTouchDispatcher() {
 }
 
 bool BSHoverNode::ccTouchBegan(CCTouch* touch, CCEvent* event) {
-    if (!CCLayer::ccTouchBegan(touch, event)) return false;
-
     auto position = convertToWorldSpace({ 0.0f, 0.0f });
     auto& size = getContentSize();
     auto touchPosition = touch->getLocation();

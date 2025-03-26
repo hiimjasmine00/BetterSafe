@@ -1,4 +1,8 @@
 # Better Safe Changelog
+## v1.1.5 (2025-03-25)
+- Retained the level previews when switching between months and re-entering the calendar from the level previews
+- Fixed some touch priority issues with the level previews
+
 ## v1.1.4 (2025-03-25)
 - Redesigned the hover previews to be more compact
 - Changed the background color of the month selection popup to match the daily/weekly/event level previews

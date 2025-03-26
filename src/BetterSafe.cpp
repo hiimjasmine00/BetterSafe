@@ -26,9 +26,9 @@ void BetterSafe::loadSafe(GJTimedLevelType type, EventListener<web::WebTask>* li
                         [](const matjson::Value& date) {
                             auto parts = string::split(date.asString().unwrapOr("1970-01-01"), "-");
                             return SafeDate {
-                                .year = parts.size() > 0 ? numFromString<int>(parts[0]).unwrapOr(1970) : 1970,
-                                .month = parts.size() > 1 ? numFromString<int>(parts[1]).unwrapOr(1) : 1,
-                                .day = parts.size() > 2 ? numFromString<int>(parts[2]).unwrapOr(1) : 1
+                                .year = (uint16_t)(parts.size() > 0 ? numFromString<int>(parts[0]).unwrapOr(1970) : 1970),
+                                .month = (uint8_t)(parts.size() > 1 ? numFromString<int>(parts[1]).unwrapOr(1) : 1),
+                                .day = (uint8_t)(parts.size() > 2 ? numFromString<int>(parts[2]).unwrapOr(1) : 1)
                             };
                         }) : std::vector<SafeDate>(),
                     .type = type,
@@ -54,7 +54,11 @@ void BetterSafe::loadSafe(GJTimedLevelType type, EventListener<web::WebTask>* li
                 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 auto timeinfo = std::localtime(&lastTime);
                 #pragma clang diagnostic pop
-                EVENT_SAFE[0].dates.push_back({ timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday });
+                EVENT_SAFE[0].dates.push_back({
+                    .year = (uint16_t)(timeinfo->tm_year + 1900),
+                    .month = (uint8_t)(timeinfo->tm_mon + 1),
+                    .day = (uint8_t)timeinfo->tm_mday
+                });
             }
 
             success();

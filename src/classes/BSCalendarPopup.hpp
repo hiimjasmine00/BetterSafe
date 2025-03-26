@@ -21,10 +21,13 @@ protected:
     CCMenuItemSpriteExtra* m_nextButton;
     CCMenuItemSpriteExtra* m_firstButton;
     CCMenuItemSpriteExtra* m_lastButton;
+    SafeDate m_currentDay;
     bool m_initialized;
 
     bool setup(CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType) override;
 
+    void closeHoverNode();
+    void createHoverNode(CCMenuItemSpriteExtra*, const SafeLevel&, GJGameLevel*);
     void createWeekdayLabel(const char*, int);
     void loadMonth(int, int, bool = false);
     void loadSafe(bool = false);

@@ -3,9 +3,9 @@
 #include <Geode/utils/web.hpp>
 
 struct SafeDate {
-    int year;
-    int month;
-    int day;
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
 };
 
 struct SafeLevel {

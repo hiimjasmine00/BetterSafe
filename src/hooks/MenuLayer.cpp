@@ -22,27 +22,27 @@ class $modify(BSMenuLayer, MenuLayer) {
         initHook->setAutoEnable(false);
 
         if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
-            auto func = [overcharged, initHook]() {
-                auto address = initHook->getAddress();
-                auto modHooks = overcharged->getHooks();
-                auto modHook = std::ranges::find_if(modHooks, [address](Hook* hook) { return hook->getAddress() == address; });
-                if (modHook == modHooks.end()) return log::error("Failed to find MenuLayer::init hook in ninxout.redash");
-
-                auto hookPriority = (*modHook)->getPriority();
-                if (initHook->getPriority() >= hookPriority) initHook->setPriority(hookPriority - 1);
-            };
-
             if (overcharged->isEnabled()) {
                 initHook->setAutoEnable(true);
-                func();
+                afterPriority(initHook, overcharged);
             }
-            else new EventListener([func = std::move(func), initHook](auto) {
-                func();
+            else new EventListener([initHook](ModStateEvent* e) {
+                afterPriority(initHook, e->getMod());
                 (void)initHook->enable().mapErr([](const std::string& err) {
                     return log::error("Failed to enable MenuLayer::init hook: {}", err), err;
                 });
             }, ModStateFilter(overcharged, ModEventType::Loaded));
         }
+    }
+
+    static void afterPriority(Hook* hook, Mod* mod) {
+        auto address = hook->getAddress();
+        auto modHooks = mod->getHooks();
+        auto modHook = std::ranges::find_if(modHooks, [address](Hook* h) { return h->getAddress() == address; });
+        if (modHook == modHooks.end()) return log::error("Failed to find MenuLayer::init hook in ninxout.redash");
+
+        auto priority = (*modHook)->getPriority();
+        if (hook->getPriority() >= priority) hook->setPriority(priority - 1);
     }
 
     bool init() {

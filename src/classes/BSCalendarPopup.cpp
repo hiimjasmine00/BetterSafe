@@ -122,7 +122,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
 
     auto refreshButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_updateBtn_001.png", 1.0f, [this](auto) {
         m_loadingCircle->setVisible(true);
-        if (m_hoverNode) m_hoverNode->close();
+        closeHoverNode();
         m_calendarMenu->removeAllChildren();
         m_prevButton->setVisible(false);
         m_nextButton->setVisible(false);
@@ -141,6 +141,14 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     queueInMainThread([this] { m_initialized = true; });
 
     return true;
+}
+
+void BSCalendarPopup::closeHoverNode() {
+    if (m_hoverNode) {
+        auto [year, month, day] = m_currentDay;
+        m_hoverNode->close();
+        m_currentDay = { year, month, day };
+    }
 }
 
 void BSCalendarPopup::createWeekdayLabel(const char* text, int idx) {
@@ -185,7 +193,7 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     m_year = year;
     m_month = month;
 
-    if (m_hoverNode) m_hoverNode->close();
+    closeHoverNode();
     m_calendarMenu->removeAllChildren();
     m_monthLabel->setString(fmt::format("{} {}", BSSelectPopup::MONTHS[m_month - 1], m_year).c_str());
     m_monthButton->updateSprite();
@@ -225,16 +233,6 @@ void BSCalendarPopup::onEnter() {
     CCLayer::onEnter();
     if (m_initialized) loadMonth(m_year, m_month);
 }
-
-#ifndef GEODE_IS_WINDOWS
-// TODO: Find CCParticleSystem members so that I don't have to do this mess
-void CCParticleSystemQuad::setOpacity(uint8_t opacity) {
-    GEODE_ANDROID64(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x32e) = opacity);
-    GEODE_ANDROID32(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x2d6) = opacity);
-    GEODE_MACOS(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x342) = opacity);
-    GEODE_IOS(*reinterpret_cast<uint8_t*>(reinterpret_cast<uintptr_t>(this) + 0x342) = opacity);
-}
-#endif
 
 void BSCalendarPopup::setupMonth(CCArray* levels) {
     m_monthButton->setEnabled(true);
@@ -347,7 +345,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                 if (hasBetweenDemon) featureIcon->setPositionY(9.5f);
                 featureIcon->setOpacity(255 - (completedLevel * 105));
                 diffIcon->addChild(featureIcon, -2);
-                if (gameLevel->m_isEpic == 3) {
+                if (gameLevel->m_isEpic == 3 && !completedLevel) {
                     auto mythicParticles = GameToolbox::particleFromString(
                         "30a-1a1.3a0.2a20a90a0a10a5a20a20a0a0a8a0a0a0a4a1a0a0a0a0a1a0a1a0a1a0a1a1a0a0a0a0a0.784314"
                         "a0a1a0a1a0a0.27a0a0.27a0a0a0a0a0a0a0a0a2a1a0a0a0a0a0a0a0.25a0a0a0a0a0a0a0a0a0a0a0",
@@ -355,12 +353,9 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                     );
                     mythicParticles->setPosition(featureIcon->getPosition());
                     mythicParticles->setScale(0.9f);
-                    mythicParticles->setOpacity(255 - (completedLevel * 105));
                     mythicParticles->resetSystem();
                     diffIcon->addChild(mythicParticles, -1);
-                    for (int i = 0; i < 5; i++) {
-                        mythicParticles->update(0.15f);
-                    }
+                    for (int _ = 0; _ < 5; _++) mythicParticles->update(0.15f);
                 }
             }
         }
@@ -371,19 +366,33 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             diffIcon->addChild(completedIcon, 1);
         }
 
-        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffIcon, [this, gameLevel, safeLevel](CCMenuItemSpriteExtra* sender) {
-            if (m_hoverNode) m_hoverNode->close();
-            m_hoverNode = BSHoverNode::create(safeLevel, gameLevel, [this] { m_hoverNode = nullptr; });
-            m_hoverNode->setPosition(sender->getPosition() + CCPoint {
-                0.0f,
-                sender->getContentHeight() / 2.0f + m_hoverNode->getContentHeight() / 2.0f + 5.0f
-            });
-            m_mainLayer->addChild(m_hoverNode, 200);
+        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffIcon, [this, i, gameLevel, safeLevel](CCMenuItemSpriteExtra* sender) {
+            if (m_hoverNode) {
+                auto [year, month, day] = m_currentDay;
+                m_hoverNode->close();
+                if (year == m_year && month == m_month && i + 1 == day) return;
+            }
+            createHoverNode(sender, safeLevel, gameLevel);
+            m_currentDay = { (uint16_t)m_year, (uint8_t)m_month, (uint8_t)(i + 1) };
         });
         hoverButton->setPosition({ (i + firstWeekday) % 7 * 38.0f + 36.0f, 219.0f - (int)((i + firstWeekday) / 7) * 38.0f });
         hoverButton->setID(fmt::format("level-button-{}", i + 1));
         m_calendarMenu->addChild(hoverButton);
+
+        if (m_year == m_currentDay.year && m_month == m_currentDay.month && i + 1 == m_currentDay.day) createHoverNode(hoverButton, safeLevel, gameLevel);
     }
+}
+
+void BSCalendarPopup::createHoverNode(CCMenuItemSpriteExtra* sender, const SafeLevel& safeLevel, GJGameLevel* gameLevel) {
+    m_hoverNode = BSHoverNode::create(safeLevel, gameLevel, [this] {
+        m_hoverNode = nullptr;
+        m_currentDay = {};
+    });
+    m_hoverNode->setPosition(sender->getPosition() + CCPoint {
+        0.0f,
+        sender->getContentHeight() / 2.0f + m_hoverNode->getContentHeight() / 2.0f + 5.0f
+    });
+    m_mainLayer->addChild(m_hoverNode, 200);
 }
 
 BSCalendarPopup::~BSCalendarPopup() {
