@@ -14,25 +14,24 @@ class $modify(BSMenuLayer, MenuLayer) {
     };
 
     static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
-        auto initHook = self.getHook("MenuLayer::init").mapErr([](const std::string& err) {
-            return log::error("Failed to get MenuLayer::init hook: {}", err), err;
-        }).unwrapOr(nullptr);
-        if (!initHook) return;
-
-        initHook->setAutoEnable(false);
-
-        if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
-            if (overcharged->isEnabled()) {
-                initHook->setAutoEnable(true);
-                afterPriority(initHook, overcharged);
+        (void)self.getHook("MenuLayer::init").map([](Hook* hook) {
+            hook->setAutoEnable(false);
+            if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
+                if (overcharged->isEnabled()) {
+                    hook->setAutoEnable(true);
+                    afterPriority(hook, overcharged);
+                }
+                else new EventListener([hook](ModStateEvent* e) {
+                    afterPriority(hook, e->getMod());
+                    (void)hook->enable().mapErr([](const std::string& err) {
+                        return log::error("Failed to enable MenuLayer::init hook: {}", err), err;
+                    });
+                }, ModStateFilter(overcharged, ModEventType::Loaded));
             }
-            else new EventListener([initHook](ModStateEvent* e) {
-                afterPriority(initHook, e->getMod());
-                (void)initHook->enable().mapErr([](const std::string& err) {
-                    return log::error("Failed to enable MenuLayer::init hook: {}", err), err;
-                });
-            }, ModStateFilter(overcharged, ModEventType::Loaded));
-        }
+            return hook;
+        }).mapErr([](const std::string& err) {
+            return log::error("Failed to get MenuLayer::init hook: {}", err), err;
+        });
     }
 
     static void afterPriority(Hook* hook, Mod* mod) {

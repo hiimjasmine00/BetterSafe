@@ -47,7 +47,7 @@ void BetterSafe::loadSafe(GJTimedLevelType type, EventListener<web::WebTask>* li
             currentTimeinfo->tm_min = 0;
             currentTimeinfo->tm_sec = 0;
             auto& [lastYear, lastMonth, lastDay] = EVENT_SAFE[1].dates.back();
-            tm timeinfo = { 0, 0, 0, lastDay, lastMonth - 1, lastYear - 1900 };
+            tm timeinfo = { 0, 0, 0, lastDay, lastMonth - 1, lastYear - 1900, 0, 0, currentTimeinfo->tm_isdst };
             auto truncatedTime = mktime(currentTimeinfo);
             for (auto lastTime = mktime(&timeinfo) + 86400; lastTime <= truncatedTime; lastTime += 86400) {
                 #pragma clang diagnostic push

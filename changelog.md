@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.1.6 (2025-04-01)
+- Fixed a bug where viewing the event level safe would cause the game to crash
+
 ## v1.1.5 (2025-03-25)
 - Retained the level previews when switching between months and re-entering the calendar from the level previews
 - Fixed some touch priority issues with the level previews

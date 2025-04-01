@@ -173,7 +173,7 @@ void BSCalendarPopup::loadSafe(bool refresh) {
         auto currentMonth = timeinfo->tm_mon + 1;
 
         auto& frontDates = safe.front().dates;
-        auto maxDate = frontDates.end() - (int)frontDates.empty();
+        auto maxDate = frontDates.end() - (int)!frontDates.empty();
         m_maxYear = maxDate != frontDates.end() ? maxDate->year : currentYear;
         m_maxMonth = maxDate != frontDates.end() ? maxDate->month : currentMonth;
 
