@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.1.7 (2025-04-08)
+- Added support for iOS
+
 ## v1.1.6 (2025-04-01)
 - Fixed a bug where viewing the event level safe would cause the game to crash
 
