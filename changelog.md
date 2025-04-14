@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.1.8 (2025-04-14)
+- Refined iOS support
+
 ## v1.1.7 (2025-04-08)
 - Added support for iOS
 
