@@ -5,7 +5,8 @@ using namespace geode::prelude;
 
 class $modify(BSDailyLevelPage, DailyLevelPage) {
     void onTheSafe(CCObject* sender) {
-        if (sender->getTag() == 91508) DailyLevelPage::onTheSafe(sender);
-        else BSCalendarPopup::create(this, menu_selector(DailyLevelPage::onTheSafe), m_type)->show();
+        if (!sender || sender->getTag() == 91508) return DailyLevelPage::onTheSafe(sender);
+        auto item = static_cast<CCMenuItem*>(sender);
+        BSCalendarPopup::create(item->m_pListener, item->m_pfnSelector, m_type)->show();
     }
 };

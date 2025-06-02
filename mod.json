@@ -1,12 +1,12 @@
 {
-    "geode": "4.3.1",
+    "geode": "4.5.0",
     "gd": {
         "android": "2.2074",
         "win": "2.2074",
         "mac": "2.2074",
         "ios": "2.2074"
     },
-    "version": "v1.1.8",
+    "version": "v1.1.9",
     "id": "hiimjustin000.better_safe",
     "name": "Better Safe",
     "developer": "hiimjasmine00",

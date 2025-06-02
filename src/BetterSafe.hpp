@@ -10,7 +10,7 @@ struct SafeDate {
 
 struct SafeLevel {
     int id;
-    int timelyID;
+    int levelID;
     std::vector<SafeDate> dates;
     GJTimedLevelType type;
     int tier;

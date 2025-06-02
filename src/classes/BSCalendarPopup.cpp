@@ -164,13 +164,9 @@ void BSCalendarPopup::loadSafe(bool refresh) {
         auto& safe = BetterSafe::getSafeLevels(m_type);
         if (safe.empty()) return;
 
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        auto currentTime = time(0);
-        auto timeinfo = std::localtime(&currentTime);
-        #pragma clang diagnostic pop
-        auto currentYear = timeinfo->tm_year + 1900;
-        auto currentMonth = timeinfo->tm_mon + 1;
+        auto timeinfo = fmt::localtime(time(0));
+        auto currentYear = timeinfo.tm_year + 1900;
+        auto currentMonth = timeinfo.tm_mon + 1;
 
         auto& frontDates = safe.front().dates;
         auto maxDate = frontDates.end() - (int)!frontDates.empty();
@@ -207,7 +203,7 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     if (levelSafe.empty()) return setupMonth(nullptr);
 
     auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick, ranges::reduce<std::string>(levelSafe,
-        [](std::string& str, const SafeLevel& level) { str += (str.empty() ? "" : ",") + std::to_string(level.id); }));
+        [](std::string& str, const SafeLevel& level) { str += (str.empty() ? "" : ",") + std::to_string(level.levelID); }));
 
     auto glm = GameLevelManager::get();
     if (!refresh) {
@@ -246,11 +242,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     if (!levels) return;
 
     tm timeinfo = { 0, 0, 0, 1, m_month - 1, m_year - 1900 };
-    auto time = mktime(&timeinfo);
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    auto firstWeekday = std::localtime(&time)->tm_wday;
-    #pragma clang diagnostic pop
+    auto firstWeekday = fmt::localtime(mktime(&timeinfo)).tm_wday;
     if (!Mod::get()->getSettingValue<bool>("sunday-first")) firstWeekday = (firstWeekday + 6) % 7;
 
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);
@@ -272,7 +264,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
         auto gameLevels = reinterpret_cast<GJGameLevel**>(levels->data->arr);
         auto gameLevelsEnd = gameLevels + levels->count();
         auto gameLevelIt = std::find_if(gameLevels, gameLevelsEnd, [&safeLevel](GJGameLevel* level) {
-            return level->m_levelID.value() == safeLevel.id;
+            return level->m_levelID.value() == safeLevel.levelID;
         });
         if (gameLevelIt == gameLevelsEnd) continue;
 
@@ -379,7 +371,8 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
         hoverButton->setID(fmt::format("level-button-{}", i + 1));
         m_calendarMenu->addChild(hoverButton);
 
-        if (m_year == m_currentDay.year && m_month == m_currentDay.month && i + 1 == m_currentDay.day) createHoverNode(hoverButton, safeLevel, gameLevel);
+        if (m_year == m_currentDay.year && m_month == m_currentDay.month && i + 1 == m_currentDay.day)
+            createHoverNode(hoverButton, safeLevel, gameLevel);
     }
 }
 

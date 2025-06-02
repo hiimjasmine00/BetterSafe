@@ -4,9 +4,15 @@
 
 using namespace geode::prelude;
 
-BSSelectPopup* BSSelectPopup::create(BSCalendarPopup* popup, SelectMonthCallback cb) {
+BSSelectPopup* BSSelectPopup::create(BSCalendarPopup* popup, SelectMonthCallback callback) {
     auto ret = new BSSelectPopup();
-    if (ret->initAnchored(250.0f, 150.0f, popup, std::move(cb), popup->getType() == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png")) {
+    if (ret->initAnchored(
+        250.0f,
+        150.0f,
+        popup,
+        std::move(callback),
+        popup->getType() == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png"
+    )) {
         ret->autorelease();
         return ret;
     }
@@ -14,7 +20,7 @@ BSSelectPopup* BSSelectPopup::create(BSCalendarPopup* popup, SelectMonthCallback
     return nullptr;
 }
 
-bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback cb) {
+bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) {
     setID("BSSelectPopup");
     setTitle("Select Date");
     m_title->setID("select-date-title");
@@ -97,11 +103,12 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback cb) {
     nextYearButton->setID("next-year-button");
     m_buttonMenu->addChild(nextYearButton);
 
-    auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f),
-        [this, cb = std::move(cb)](auto) {
-            cb(m_year, m_month);
-            onClose(nullptr);
-        });
+    auto confirmButton = CCMenuItemExt::createSpriteExtra(ButtonSprite::create("Confirm", "goldFont.fnt", "GJ_button_01.png", 0.8f), [
+        this, callback = std::move(callback)
+    ](auto) {
+        callback(m_year, m_month);
+        onClose(nullptr);
+    });
     confirmButton->setPosition({ 125.0f, 25.0f });
     confirmButton->setID("confirm-button");
     m_buttonMenu->addChild(confirmButton);

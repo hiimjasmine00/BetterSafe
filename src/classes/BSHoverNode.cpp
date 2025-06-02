@@ -1,12 +1,9 @@
 #include "BSHoverNode.hpp"
-#include <Geode/binding/ButtonSprite.hpp>
-#include <Geode/binding/GameManager.hpp>
 #include <Geode/binding/GameLevelManager.hpp>
 #include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/ProfilePage.hpp>
 #include <Geode/utils/cocos.hpp>
-#include <Geode/ui/Layout.hpp>
 
 using namespace geode::prelude;
 
@@ -47,7 +44,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
         case GJTimedLevelType::Event: timedName = "Event"; break;
         default: break;
     }
-    auto dailyLabel = CCLabelBMFont::create(fmt::format("{} #{}", timedName, level.timelyID).c_str(), "goldFont.fnt");
+    auto dailyLabel = CCLabelBMFont::create(fmt::format("{} #{}", timedName, level.id).c_str(), "goldFont.fnt");
     dailyLabel->setPosition({ 40.0f, 45.0f });
     dailyLabel->setScale(0.3f);
     dailyLabel->setID("daily-label");
@@ -76,7 +73,8 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     creatorLabel->setScale(0.4f);
     auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [this, gameLevel](auto) {
         auto accountID = gameLevel->m_accountID.value();
-        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0) ProfilePage::create(accountID, false)->show();
+        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0)
+            ProfilePage::create(accountID, false)->show();
     });
     creatorButton->setPosition({ 0.0f, 23.0f });
     creatorButton->setID("creator-button");

@@ -23,15 +23,13 @@ class $modify(BSMenuLayer, MenuLayer) {
                 }
                 else new EventListener([hook](ModStateEvent* e) {
                     afterPriority(hook, e->getMod());
-                    (void)hook->enable().mapErr([](const std::string& err) {
-                        return log::error("Failed to enable MenuLayer::init hook: {}", err), err;
+                    (void)hook->enable().inspectErr([](const std::string& err) {
+                        log::error("Failed to enable MenuLayer::init hook: {}", err);
                     });
                 }, ModStateFilter(overcharged, ModEventType::Loaded));
             }
             return hook;
-        }).mapErr([](const std::string& err) {
-            return log::error("Failed to get MenuLayer::init hook: {}", err), err;
-        });
+        }).inspectErr([](const std::string& err) { log::error("Failed to get MenuLayer::init hook: {}", err); });
     }
 
     static void afterPriority(Hook* hook, Mod* mod) {
