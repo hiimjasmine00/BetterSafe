@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.1.10 (2025-06-23)
+- Ported to Geode v4.6.1
+
 ## v1.1.9 (2025-06-01)
 - Switched to a new API for getting the safe levels (No longer manually updated by me, but automatically updated by the API)
 

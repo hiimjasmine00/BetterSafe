@@ -1,16 +1,16 @@
 {
-    "geode": "4.5.0",
+    "geode": "4.6.1",
     "gd": {
         "android": "2.2074",
         "win": "2.2074",
         "mac": "2.2074",
         "ios": "2.2074"
     },
-    "version": "v1.1.9",
+    "version": "v1.1.10",
     "id": "hiimjustin000.better_safe",
     "name": "Better Safe",
     "developer": "hiimjasmine00",
-    "description": "A mod that expands The Safe with a calendar.",
+    "description": "Expand The Safe with a calendar.",
     "settings": {
         "sunday-first": {
             "name": "Sunday First",

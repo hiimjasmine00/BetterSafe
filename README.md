@@ -1,5 +1,5 @@
 # Better Safe
-A mod that expands The Safe with a calendar.
+Expand The Safe with a calendar.
 
 # Features
 - Calendars for daily, weekly and event levels, showing what was featured on each day
