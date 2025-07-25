@@ -3,26 +3,27 @@
 #include <Geode/utils/web.hpp>
 
 struct SafeDate {
-    uint16_t year;
-    uint8_t month;
-    uint8_t day;
+    uint16_t year = 1970;
+    uint8_t month = 1;
+    uint8_t day = 1;
 };
 
 struct SafeLevel {
-    int id;
-    int levelID;
+    int id = 0;
+    int levelID = 0;
     std::vector<SafeDate> dates;
     GJTimedLevelType type;
-    int tier;
+    int tier = 0;
 };
 
 class BetterSafe {
 public:
-    inline static std::vector<SafeLevel> DAILY_SAFE;
-    inline static std::vector<SafeLevel> WEEKLY_SAFE;
-    inline static std::vector<SafeLevel> EVENT_SAFE;
+    inline static std::map<GJTimedLevelType, std::vector<SafeLevel>> safes = {
+        { GJTimedLevelType::Daily, {} },
+        { GJTimedLevelType::Weekly, {} },
+        { GJTimedLevelType::Event, {} }
+    };
 
     static void loadSafe(GJTimedLevelType, geode::EventListener<geode::utils::web::WebTask>*, std::function<void()>, std::function<void(int)>);
     static std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
-    static std::vector<SafeLevel>& getSafeLevels(GJTimedLevelType type);
 };

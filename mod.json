@@ -1,12 +1,12 @@
 {
-    "geode": "4.6.1",
+    "geode": "4.7.0",
     "gd": {
         "android": "2.2074",
         "win": "2.2074",
         "mac": "2.2074",
         "ios": "2.2074"
     },
-    "version": "v1.1.10",
+    "version": "v1.2.0",
     "id": "hiimjustin000.better_safe",
     "name": "Better Safe",
     "developer": "hiimjasmine00",
@@ -17,6 +17,12 @@
             "description": "Start the week on Sunday instead of Monday.",
             "type": "bool",
             "default": false
+        },
+        "show-checkmarks": {
+            "name": "Show Checkmarks",
+            "description": "Show checkmarks on levels that have been completed.",
+            "type": "bool",
+            "default": true
         }
     },
     "resources": {

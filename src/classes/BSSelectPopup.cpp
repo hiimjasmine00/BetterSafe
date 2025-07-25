@@ -35,13 +35,13 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
 
     if (popup->getType() == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
 
-    auto monthLabel = CCLabelBMFont::create(MONTHS[m_month - 1], "bigFont.fnt");
+    auto monthLabel = CCLabelBMFont::create(months[m_month - 1], "bigFont.fnt");
     monthLabel->setScale(0.9f);
     monthLabel->setPosition({ 125.0f, 100.0f });
     monthLabel->setID("month-label");
     m_mainLayer->addChild(monthLabel);
 
-    auto yearLabel = CCLabelBMFont::create(std::to_string(m_year).c_str(), "bigFont.fnt");
+    auto yearLabel = CCLabelBMFont::create(fmt::to_string(m_year).c_str(), "bigFont.fnt");
     yearLabel->setScale(0.9f);
     yearLabel->setPosition({ 125.0f, 65.0f });
     yearLabel->setID("year-label");
@@ -54,8 +54,8 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
             m_month = 12;
         }
         else m_month--;
-        monthLabel->setString(MONTHS[m_month - 1]);
-        yearLabel->setString(std::to_string(m_year).c_str());
+        monthLabel->setString(months[m_month - 1]);
+        yearLabel->setString(fmt::to_string(m_year).c_str());
     });
     prevMonthButton->setPosition({ 25.0f, 100.0f });
     prevMonthButton->setID("prev-month-button");
@@ -71,8 +71,8 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
             m_month = 1;
         }
         else m_month++;
-        monthLabel->setString(MONTHS[m_month - 1]);
-        yearLabel->setString(std::to_string(m_year).c_str());
+        monthLabel->setString(months[m_month - 1]);
+        yearLabel->setString(fmt::to_string(m_year).c_str());
     });
     nextMonthButton->setPosition({ 225.0f, 100.0f });
     nextMonthButton->setID("next-month-button");
@@ -82,8 +82,8 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
         if (m_year == popup->getMinYear()) return;
         m_year--;
         if (m_year == popup->getMinYear() && m_month < popup->getMinMonth()) m_month = popup->getMinMonth();
-        monthLabel->setString(MONTHS[m_month - 1]);
-        yearLabel->setString(std::to_string(m_year).c_str());
+        monthLabel->setString(months[m_month - 1]);
+        yearLabel->setString(fmt::to_string(m_year).c_str());
     });
     prevYearButton->setPosition({ 25.0f, 65.0f });
     prevYearButton->setID("prev-year-button");
@@ -96,8 +96,8 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
         if (m_year == popup->getMaxYear()) return;
         m_year++;
         if (m_year == popup->getMaxYear() && m_month > popup->getMaxMonth()) m_month = popup->getMaxMonth();
-        monthLabel->setString(MONTHS[m_month - 1]);
-        yearLabel->setString(std::to_string(m_year).c_str());
+        monthLabel->setString(months[m_month - 1]);
+        yearLabel->setString(fmt::to_string(m_year).c_str());
     });
     nextYearButton->setPosition({ 225.0f, 65.0f });
     nextYearButton->setID("next-year-button");

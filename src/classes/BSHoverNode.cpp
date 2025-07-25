@@ -37,14 +37,8 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     background->setID("background");
     addChild(background);
 
-    auto timedName = "";
-    switch (level.type) {
-        case GJTimedLevelType::Daily: timedName = "Daily"; break;
-        case GJTimedLevelType::Weekly: timedName = "Weekly"; break;
-        case GJTimedLevelType::Event: timedName = "Event"; break;
-        default: break;
-    }
-    auto dailyLabel = CCLabelBMFont::create(fmt::format("{} #{}", timedName, level.id).c_str(), "goldFont.fnt");
+    constexpr std::array names = { "Daily", "Weekly", "Event" };
+    auto dailyLabel = CCLabelBMFont::create(fmt::format("{} #{}", names[(int)level.type], level.id).c_str(), "goldFont.fnt");
     dailyLabel->setPosition({ 40.0f, 45.0f });
     dailyLabel->setScale(0.3f);
     dailyLabel->setID("daily-label");
@@ -98,7 +92,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
 
     auto gsm = GameStatsManager::get();
 
-    auto starsLabel = CCLabelBMFont::create(std::to_string(gameLevel->m_stars.value()).c_str(), "bigFont.fnt");
+    auto starsLabel = CCLabelBMFont::create(fmt::to_string(gameLevel->m_stars.value()).c_str(), "bigFont.fnt");
     starsLabel->setScale(0.4f);
     starsLabel->setColor({ 255, 255, (uint8_t)(255 - gsm->hasCompletedLevel(gameLevel) * 205) });
     starsLabel->setID("stars-label");

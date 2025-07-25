@@ -1,4 +1,9 @@
 # Better Safe Changelog
+## v1.2.0 (2025-07-25)
+- Added compatibility with "Rating Particles" by Sawblade and "Animated Fire" by Uproxide
+- Added text to the level buttons to indicate the day of the month
+- Fixed a rare crash that can occur when re-entering the calendar
+
 ## v1.1.10 (2025-06-23)
 - Ported to Geode v4.6.1
 

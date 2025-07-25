@@ -14,7 +14,7 @@ class $modify(BSMenuLayer, MenuLayer) {
     };
 
     static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
-        (void)self.getHook("MenuLayer::init").map([](Hook* hook) {
+        self.getHook("MenuLayer::init").inspect([](Hook* hook) {
             hook->setAutoEnable(false);
             if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
                 if (overcharged->isEnabled()) {
@@ -23,12 +23,11 @@ class $modify(BSMenuLayer, MenuLayer) {
                 }
                 else new EventListener([hook](ModStateEvent* e) {
                     afterPriority(hook, e->getMod());
-                    (void)hook->enable().inspectErr([](const std::string& err) {
+                    hook->enable().inspectErr([](const std::string& err) {
                         log::error("Failed to enable MenuLayer::init hook: {}", err);
                     });
                 }, ModStateFilter(overcharged, ModEventType::Loaded));
             }
-            return hook;
         }).inspectErr([](const std::string& err) { log::error("Failed to get MenuLayer::init hook: {}", err); });
     }
 
