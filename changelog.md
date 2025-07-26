@@ -1,7 +1,13 @@
 # Better Safe Changelog
+## v1.2.1 (2025-07-26)
+- Added compatibility with "GodlikeFaces" by AdyaGD and meeeeee :3
+- Added settings to toggle the visibility of the day text and particles on uncompleted levels
+- Fixed a bug where the mythic particles would be too large without the "Rating Particles" mod enabled
+
 ## v1.2.0 (2025-07-25)
 - Added compatibility with "Rating Particles" by Sawblade and "Animated Fire" by Uproxide
 - Added text to the level buttons to indicate the day of the month
+- Added a setting to toggle the visibility of the checkmarks on completed levels
 - Fixed a rare crash that can occur when re-entering the calendar
 
 ## v1.1.10 (2025-06-23)

@@ -6,7 +6,7 @@
         "mac": "2.2074",
         "ios": "2.2074"
     },
-    "version": "v1.2.0",
+    "version": "v1.2.1",
     "id": "hiimjustin000.better_safe",
     "name": "Better Safe",
     "developer": "hiimjasmine00",
@@ -14,13 +14,25 @@
     "settings": {
         "sunday-first": {
             "name": "Sunday First",
-            "description": "Start the week on Sunday instead of Monday.",
+            "description": "Whether to start the week on Sunday instead of Monday.",
             "type": "bool",
             "default": false
         },
         "show-checkmarks": {
             "name": "Show Checkmarks",
-            "description": "Show checkmarks on levels that have been completed.",
+            "description": "Whether to show checkmarks on completed levels.",
+            "type": "bool",
+            "default": true
+        },
+        "show-days": {
+            "name": "Show Days",
+            "description": "Whether to show the day of the month on each level.",
+            "type": "bool",
+            "default": true
+        },
+        "show-particles": {
+            "name": "Show Particles",
+            "description": "Whether to show particles on uncompleted levels.",
             "type": "bool",
             "default": true
         }

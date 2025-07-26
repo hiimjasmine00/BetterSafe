@@ -2,7 +2,7 @@
 #include "BSSelectPopup.hpp"
 #include <Geode/binding/GameLevelManager.hpp>
 #include <Geode/binding/GameStatsManager.hpp>
-#include <Geode/binding/GameToolbox.hpp>
+#include <Geode/binding/GJDifficultySprite.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/GJSearchObject.hpp>
 #include <Geode/binding/LoadingCircle.hpp>
@@ -260,8 +260,18 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     auto daysInMonth = m_month <= daysPerMonth.size() ? daysPerMonth[m_month - 1] : 0;
     if (m_month == 2 && (m_year % 4 == 0 && (m_year % 100 != 0 || m_year % 400 == 0))) daysInMonth++;
 
+    auto loader = Loader::get();
+    auto demonsInBetween = loader->getLoadedMod("hiimjustin000.demons_in_between");
+    auto enableDifficulties = demonsInBetween && demonsInBetween->getSettingValue<bool>("enable-difficulties");
+    auto enableLegendary = demonsInBetween && demonsInBetween->getSettingValue<bool>("enable-legendary");
+    auto enableMythic = demonsInBetween && demonsInBetween->getSettingValue<bool>("enable-mythic");
+    auto moreDifficulties = loader->getLoadedMod("uproxide.more_difficulties");
+    auto legacyDifficulties = moreDifficulties && moreDifficulties->getSettingValue<bool>("legacy-difficulties");
     auto showCheckmarks = mod->getSettingValue<bool>("show-checkmarks");
-    auto spriteFrameCache = CCSpriteFrameCache::get();
+    auto showDays = mod->getSettingValue<bool>("show-days");
+    auto showParticles = mod->getSettingValue<bool>("show-particles");
+    auto sfc = CCSpriteFrameCache::get();
+
     for (int i = 0; i < daysInMonth; i++) {
         auto safeLevelIt = std::ranges::find_if(levelSafe, [this, i = i + 1](const SafeLevel& level) {
             return std::ranges::any_of(level.dates, [this, i](const SafeDate& date) {
@@ -269,101 +279,102 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             });
         });
         if (safeLevelIt == levelSafe.end()) continue;
-
         auto& safeLevel = *safeLevelIt;
-        auto gameLevelIt = levelMap.find(safeLevel.levelID);
-        if (gameLevelIt == levelMap.end()) continue;
 
-        auto gameLevel = gameLevelIt->second;
-        auto levelDifficulty = gameLevel->m_demon > 0 ? gameLevel->m_demonDifficulty > 0 ? gameLevel->m_demonDifficulty + 4 : 6 :
-            gameLevel->m_autoLevel ? -1 : gameLevel->m_ratings < 5 ? 0 : gameLevel->m_ratingsSum / gameLevel->m_ratings;
-        auto diffFrame = levelDifficulty == -1 ? "diffIcon_auto_btn_001.png" : fmt::format("diffIcon_{:02}_btn_001.png", levelDifficulty);
-        auto featureState = gameLevel->m_featured > 0 ? gameLevel->m_isEpic + 1 : 0;
+        auto levelIt = levelMap.find(safeLevel.levelID);
+        if (levelIt == levelMap.end()) continue;
+        auto level = levelIt->second;
 
-        if (auto moreDifficulties = Loader::get()->getLoadedMod("uproxide.more_difficulties")) {
-            auto legacy = moreDifficulties->getSettingValue<bool>("legacy-difficulties");
-            auto levelStars = gameLevel->m_stars.value();
-            if (moreDifficulties->getSavedValue<bool>("casual", true) && levelDifficulty == 3 && levelStars == 4)
-                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty04Small{}.png", legacy ? "_Legacy" : "");
-            else if (moreDifficulties->getSavedValue<bool>("tough", true) && levelDifficulty == 4 && levelStars == 7)
-                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty07Small{}.png", legacy ? "_Legacy" : "");
-            else if (moreDifficulties->getSavedValue<bool>("cruel", true) && levelDifficulty == 5 && levelStars == 9)
-                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty09Small{}.png", legacy ? "_Legacy" : "");
+        auto completedLevel = showCheckmarks && GameStatsManager::get()->hasCompletedLevel(level);
+
+        auto diffNode = CCNode::create();
+        diffNode->setScale(0.75f);
+        diffNode->setContentSize({ 40.0f, 40.0f });
+        diffNode->setAnchorPoint({ 0.5f, 0.5f });
+
+        auto stencil = CCLayerColor::create({ 0, 0, 0, 255 }, 40.0f, 35.0f);
+        stencil->ignoreAnchorPointForPosition(false);
+        stencil->setPosition({ 20.0f, 20.0f });
+        auto clipNode = CCClippingNode::create(stencil);
+        clipNode->setPosition({ 20.0f, 20.0f });
+        clipNode->setContentSize({ 40.0f, 40.0f });
+        clipNode->setAnchorPoint({ 0.5f, 0.5f });
+
+        auto difficulty = level->m_demon > 0 ? level->m_demonDifficulty > 0 ? level->m_demonDifficulty + 4 : 6 :
+            level->m_autoLevel ? -1 : level->m_ratings < 5 ? 0 : level->m_ratingsSum / level->m_ratings;
+        auto featureState = level->m_featured > 0 ? level->m_isEpic + 1 : 0;
+
+        std::string diffFrame;
+        CCPoint diffPos = { 20.0f, 14.5f };
+
+        if (moreDifficulties) {
+            auto stars = level->m_stars.value();
+            if (moreDifficulties->getSavedValue<bool>("casual", true) && difficulty == 3 && stars == 4)
+                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacyDifficulties ? "_Legacy" : "");
+            else if (moreDifficulties->getSavedValue<bool>("tough", true) && difficulty == 4 && stars == 7)
+                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacyDifficulties ? "_Legacy" : "");
+            else if (moreDifficulties->getSavedValue<bool>("cruel", true) && difficulty == 5 && stars == 9)
+                diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacyDifficulties ? "_Legacy" : "");
         }
 
-        CCPoint featurePosition;
-        if (auto demonsInBetween = Loader::get()->getLoadedMod("hiimjustin000.demons_in_between")) {
-            if (demonsInBetween->getSettingValue<bool>("enable-difficulties") && safeLevel.tier > 0) {
-                constexpr std::array difficulties = {
-                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15,
-                    16, 17, 18, 19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
-                };
-                if (safeLevel.tier < difficulties.size()) {
-                    diffFrame = fmt::format("hiimjustin000.demons_in_between/DIB_{:02}_001.png", difficulties[safeLevel.tier]);
-                    featurePosition.y = 9.5f;
-                }
+        if (enableDifficulties && safeLevel.tier > 0) {
+            constexpr std::array difficulties = {
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15,
+                16, 17, 18, 19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+            };
+            constexpr std::array<cocos2d::CCPoint, 21> positions = {
+                cocos2d::CCPoint { 0.0f, 0.0f },
+                { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, -0.25f },
+                { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, 0.5f }, { -0.125f, 0.5f }, { -0.125f, 0.25f },
+                { -0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.0f, 0.5f },
+                { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }
+            };
+            if (safeLevel.tier < difficulties.size()) {
+                difficulty = difficulties[safeLevel.tier];
+                diffFrame = fmt::format("hiimjustin000.demons_in_between/DIB_{:02}{}_btn_001.png",
+                    difficulty, enableLegendary && featureState == 3 ? "_4" : enableMythic && featureState == 4 ? "_5" : "");
+                diffPos += positions[difficulty];
             }
         }
 
-        auto completedLevel = showCheckmarks && GameStatsManager::get()->hasCompletedLevel(gameLevel);
-
-        auto diffIcon = CCSprite::createWithSpriteFrameName(diffFrame.c_str());
-        diffIcon->setScale(0.75f);
+        auto diffSprite = GJDifficultySprite::create(difficulty, GJDifficultyName::Short);
+        diffSprite->updateFeatureState((GJFeatureState)featureState);
+        auto diffIcon = CCSprite::createWithSpriteFrame(diffFrame.empty() ? diffSprite->displayFrame() : sfc->spriteFrameByName(diffFrame.c_str()));
+        diffIcon->setPosition(diffPos);
         diffIcon->setOpacity(255 - (completedLevel * 105));
+        clipNode->addChild(diffIcon);
 
-        if (featurePosition.y > 0.0f) featurePosition.x = diffIcon->getContentWidth() / 2.0f;
-        else featurePosition = diffIcon->getContentSize() / 2.0f - CCPoint { 0.0f, 5.5f };
+        diffNode->addChild(clipNode);
 
-        if (featureState > 0) {
-            CCSprite* featureIcon = nullptr;
-            if (Loader::get()->isModLoaded("uproxide.animated_fire") && featureState > 1) {
-                constexpr std::array prefixes = {
-                    "uproxide.animated_fire/EpicFrame_",
-                    "uproxide.animated_fire/LegendaryFrame_",
-                    "uproxide.animated_fire/MythicFrame_"
-                };
-                auto prefix = prefixes[featureState - 2];
-                auto spriteFrames = CCArray::create();
-                for (int i = 1; i < 9; i++) {
-                    spriteFrames->addObject(spriteFrameCache->spriteFrameByName(fmt::format("{}{:02}.png", prefix, i).c_str()));
-                }
-                featureIcon = CCSprite::createWithSpriteFrame(static_cast<CCSpriteFrame*>(spriteFrames->objectAtIndex(0)));
-                featureIcon->runAction(CCRepeatForever::create(CCAnimate::create(CCAnimation::createWithSpriteFrames(spriteFrames, 1.0f / 12.0f))));
-                featurePosition.y += 15.875f + (featureState == 2);
-            }
-            else {
-                constexpr std::array frames = {
-                    "GJ_featuredCoin_001.png", "GJ_epicCoin_001.png", "GJ_epicCoin2_001.png", "GJ_epicCoin3_001.png"
-                };
-                featureIcon = CCSprite::createWithSpriteFrameName(featureState <= frames.size() ? frames[featureState - 1] : "");
-            }
-            if (featureIcon) {
-                featureIcon->setPosition(featurePosition);
-                featureIcon->setOpacity(255 - (completedLevel * 105));
-                diffIcon->addChild(featureIcon, -2);
-            }
+        auto diffSize = diffSprite->getContentSize() / 2.0f;
+        for (Ref child = getChild(diffSprite, 0); diffSprite->getChildrenCount() > 0; child = getChild(diffSprite, 0)) {
+            child->removeFromParentAndCleanup(false);
+            child->setPosition(child->getPosition() - diffSize + CCPoint { 20.0f, 14.5f });
+            if (auto rgbaProtocol = typeinfo_cast<CCRGBAProtocol*>(child.data())) rgbaProtocol->setOpacity(255 - (completedLevel * 105));
+            else if (typeinfo_cast<CCParticleSystem*>(child.data())) child->setVisible(showParticles && !completedLevel);
+            diffNode->addChild(child);
         }
 
         if (completedLevel) {
             auto completedIcon = CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
-            completedIcon->setPosition(diffIcon->getContentSize() / 2.0f);
-            diffIcon->addChild(completedIcon, 1);
+            completedIcon->setPosition({ 20.0f, 20.0f });
+            diffNode->addChild(completedIcon, 1);
         }
-        else {
+        else if (showDays) {
             auto dayLabel = CCLabelBMFont::create(fmt::to_string(i + 1).c_str(), "bigFont.fnt");
             dayLabel->setScale(0.4f);
-            dayLabel->setPosition({ diffIcon->getContentWidth() + 3.0f, -3.0f });
+            dayLabel->setPosition({ 40.0f, 0.0f });
             dayLabel->setAnchorPoint({ 1.0f, 0.0f });
-            diffIcon->addChild(dayLabel, 1);
+            diffNode->addChild(dayLabel, 1);
         }
 
-        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffIcon, [this, i, gameLevel, safeLevel](CCMenuItemSpriteExtra* sender) {
+        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffNode, [this, i, level, safeLevel](CCMenuItemSpriteExtra* sender) {
             if (m_hoverNode) {
                 auto [year, month, day] = m_currentDay;
                 m_hoverNode->close();
                 if (year == m_year && month == m_month && i + 1 == day) return;
             }
-            createHoverNode(sender, safeLevel, gameLevel);
+            createHoverNode(sender, safeLevel, level);
             m_currentDay.year = m_year;
             m_currentDay.month = m_month;
             m_currentDay.day = i + 1;
@@ -373,92 +384,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
         m_calendarMenu->addChild(hoverButton);
 
         if (m_year == m_currentDay.year && m_month == m_currentDay.month && i + 1 == m_currentDay.day)
-            createHoverNode(hoverButton, safeLevel, gameLevel);
-
-        if (completedLevel || featureState < 0 || featureState > 4) continue;
-
-        auto RP = Loader::get()->getLoadedMod("sawblade.rating_particles");
-        if (RP) {
-            constexpr std::array toggles = {
-                "show-rate", "show-featured", "show-epic", "show-legendary", "show-mythic"
-            };
-            if (!RP->getSettingValue<bool>(toggles[featureState])) continue;
-        }
-        else if (featureState != 4) continue;
-
-        constexpr std::array colors = {
-            "rate-color", "featured-color", "epic-color", "legendary-color", "mythic-color"
-        };
-        auto color = colors[featureState];
-
-        auto particles = CCParticleSystemQuad::createWithTotalParticles(RP ? RP->getSettingValue<int64_t>("amount") : 30, false);
-        particles->setDuration(-1.0f);
-        particles->setLife(1.3f);
-        particles->setLifeVar(0.2f);
-        particles->setEmissionRate(RP ? RP->getSettingValue<int64_t>("amount") : 20.0f);
-        particles->setAngle(90.0f);
-        particles->setAngleVar(0.0f);
-        particles->setSpeed(RP ? RP->getSettingValue<int64_t>("speed") : 10.0f);
-        particles->setSpeedVar(5.0f);
-        particles->setPosVar({ 20.0f, 20.0f });
-        particles->setGravity({ 0.0f, 0.0f });
-        particles->setRadialAccel(8.0f);
-        particles->setRadialAccelVar(0.0f);
-        particles->setTangentialAccel(0.0f);
-        particles->setTangentialAccelVar(0.0f);
-        particles->setStartSize(RP ? RP->getSettingValue<int64_t>("size") : 20.0f);
-        particles->setStartSizeVar(1.0f);
-        particles->setStartSpin(0.0f);
-        particles->setStartSpinVar(0.0f);
-        particles->setStartColor(to4F(to4B(RP ? RP->getSettingValue<ccColor3B>(color) : ccColor3B { 0, 255, 255 })));
-        particles->setStartColorVar({ 0.0f, 0.0f, 0.0f, 0.0f });
-        particles->setEndSize(1.0f);
-        particles->setEndSizeVar(1.0f);
-        particles->setEndSpin(0.0f);
-        particles->setEndSpinVar(0.0f);
-        particles->setEndColor(to4F(to4B(RP ? lighten3B(RP->getSettingValue<ccColor3B>(color), 30) : ccColor3B { 0, 200, 255 })));
-        particles->setEndColorVar({ 0.0f, 0.0f, 0.0f, 0.0f });
-        particles->m_fFadeInTime = 0.27f;
-        particles->m_fFadeInTimeVar = 0.0f;
-        particles->m_fFadeOutTime = 0.27f;
-        particles->m_fFadeOutTimeVar = 0.0f;
-        particles->setStartRadius(0.0f);
-        particles->setStartRadiusVar(0.0f);
-        particles->setEndRadius(0.0f);
-        particles->setEndRadiusVar(0.0f);
-        particles->setRotatePerSecond(0.0f);
-        particles->setRotatePerSecondVar(0.0f);
-        particles->setEmitterMode(kCCParticleModeGravity);
-        particles->setPositionType(kCCPositionTypeGrouped);
-        particles->setBlendAdditive(RP ? RP->getSettingValue<bool>("blending") : true);
-        particles->m_bStartSpinEqualToEnd = false;
-        particles->setRotationIsDir(false);
-        particles->m_bDynamicRotationIsDir = false;
-        particles->m_uParticleIdx = RP ? RP->getSettingValue<int64_t>("texture") : 0;
-        particles->setDisplayFrame(spriteFrameCache->spriteFrameByName(fmt::format("particle_{:02}_001.png", particles->m_uParticleIdx).c_str()));
-        particles->m_bUseUniformColorMode = false;
-        particles->m_fFrictionPos = 0.0f;
-        particles->m_fFrictionPosVar = 0.25f;
-        particles->m_fRespawn = 0.0f;
-        particles->m_fRespawnVar = 0.0f;
-        particles->m_bOrderSensitive = false;
-        particles->m_bStartSizeEqualToEnd = false;
-        particles->m_bStartRadiusEqualToEnd = false;
-        particles->m_bStartRGBVarSync = false;
-        particles->m_bEndRGBVarSync = false;
-        particles->m_fFrictionSize = 0.0f;
-        particles->m_fFrictionSizeVar = 0.0f;
-        particles->m_fFrictionRot = 0.0f;
-        particles->m_fFrictionRotVar = 0.0f;
-        particles->setPosition(featurePosition);
-        particles->setScale(0.9f);
-        particles->resetSystem();
-        diffIcon->addChild(particles, -1);
-        particles->update(0.15f);
-        particles->update(0.15f);
-        particles->update(0.15f);
-        particles->update(0.15f);
-        particles->update(0.15f);
+            createHoverNode(hoverButton, safeLevel, level);
     }
 }
 
