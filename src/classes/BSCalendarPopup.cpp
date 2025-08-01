@@ -206,21 +206,20 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     if (levelSafe.empty()) return setupMonth(nullptr);
 
     auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick);
-    if constexpr (std::is_same_v<gd::string, std::string>) {
-        auto& searchQuery = searchObject->m_searchQuery;
-        for (auto& level : levelSafe) {
-            if (!searchQuery.empty()) searchQuery += ',';
-            searchQuery += fmt::to_string(level.levelID);
-        }
+    #ifdef GEODE_IS_ANDROID
+    std::string searchQuery = searchObject->m_searchQuery;
+    for (auto& level : levelSafe) {
+        if (!searchQuery.empty()) searchQuery += ',';
+        searchQuery += fmt::to_string(level.levelID);
     }
-    else {
-        std::string searchQuery = searchObject->m_searchQuery;
-        for (auto& level : levelSafe) {
-            if (!searchQuery.empty()) searchQuery += ',';
-            searchQuery += fmt::to_string(level.levelID);
-        }
-        searchObject->m_searchQuery = searchQuery;
+    searchObject->m_searchQuery = searchQuery;
+    #else
+    auto& searchQuery = searchObject->m_searchQuery;
+    for (auto& level : levelSafe) {
+        if (!searchQuery.empty()) searchQuery += ',';
+        searchQuery += fmt::to_string(level.levelID);
     }
+    #endif
 
     auto glm = GameLevelManager::get();
     if (!refresh) {
