@@ -9,7 +9,7 @@ endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(GEODE_DISABLE_PRECOMPILED_HEADERS ON)
 
-project(BetterSafe VERSION 1.2.1)
+project(BetterSafe VERSION 1.2.2)
 
 add_library(${PROJECT_NAME} SHARED
     src/classes/BSCalendarPopup.cpp

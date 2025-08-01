@@ -1,5 +1,4 @@
 #include "BetterSafe.hpp"
-#include <Geode/utils/ranges.hpp>
 #include <Geode/utils/string.hpp>
 
 using namespace geode::prelude;
@@ -20,33 +19,47 @@ void BetterSafe::loadSafe(
         if (auto res = e->getValue()) {
             if (!res->ok()) return failure(res->code());
 
-            safes[type] = ranges::map<std::vector<SafeLevel>>(
-                res->json().unwrapOrDefault().asArray().unwrapOrDefault(),
-                [type](const matjson::Value& v) {
-                    SafeLevel level;
-                    GEODE_UNWRAP_INTO_IF_OK(level.id, v.get("id").andThen([](const matjson::Value& v) { return v.as<int>(); }));
-                    GEODE_UNWRAP_INTO_IF_OK(level.levelID, v.get("levelID").andThen([](const matjson::Value& v) { return v.as<int>(); }));
-                    GEODE_UNWRAP_INTO_IF_OK(level.dates, v.get("dates").andThen([](const matjson::Value& v) {
-                        return v.asArray().map([](const std::vector<matjson::Value>& vec) {
-                            return ranges::map<std::vector<SafeDate>>(vec, [](const matjson::Value& d) {
-                                SafeDate date;
-                                if (!d.isString()) return date;
-                                auto parts = string::split(d.asString().unwrap(), "-");
-                                if (parts.size() < 1) return date;
-                                GEODE_UNWRAP_INTO_IF_OK(date.year, numFromString<int>(parts[0]));
-                                if (parts.size() < 2) return date;
-                                GEODE_UNWRAP_INTO_IF_OK(date.month, numFromString<int>(parts[1]));
-                                if (parts.size() < 3) return date;
-                                GEODE_UNWRAP_INTO_IF_OK(date.day, numFromString<int>(parts[2]));
-                                return date;
-                            });
-                        });
-                    }));
-                    level.type = type;
-                    GEODE_UNWRAP_INTO_IF_OK(level.tier, v.get("tier").andThen([](const matjson::Value& v) { return v.as<int>(); }));
-                    return level;
-                }
-            );
+            auto& safe = safes[type];
+            for (auto& value : res->json().unwrapOrDefault()) {
+                auto& level = safe.emplace_back();
+                if (!value.isObject()) continue;
+                GEODE_UNWRAP_INTO_IF_OK(level.id, value.get("id").andThen([](const matjson::Value& v) { return v.as<int>(); }));
+                GEODE_UNWRAP_INTO_IF_OK(level.levelID, value.get("levelID").andThen([](const matjson::Value& v) { return v.as<int>(); }));
+                GEODE_UNWRAP_INTO_IF_OK(level.dates, value.get("dates").map([](const matjson::Value& v) {
+                    std::vector<SafeDate> dates;
+                    for (auto& value : v) {
+                        auto& date = dates.emplace_back(0, 0, 0);
+                        auto i = 0;
+                        for (auto& c : value.asString().unwrapOrDefault()) {
+                            if (c >= '0' && c <= '9') {
+                                switch (i) {
+                                    case 0:
+                                        date.year *= 10;
+                                        date.year += c - '0';
+                                        break;
+                                    case 1:
+                                        date.month *= 10;
+                                        date.month += c - '0';
+                                        break;
+                                    case 2:
+                                        date.day *= 10;
+                                        date.day += c - '0';
+                                        break;
+                                }
+                            }
+                            else if (c == '-') i++;
+                        }
+                        if (date.year == 0 && date.month == 0 && date.day == 0) {
+                            date.year = 1970;
+                            date.month = 1;
+                            date.day = 1;
+                        }
+                    }
+                    return dates;
+                }));
+                level.type = type;
+                GEODE_UNWRAP_INTO_IF_OK(level.tier, value.get("tier").andThen([](const matjson::Value& v) { return v.as<int>(); }));
+            }
 
             success();
         }
@@ -57,11 +70,11 @@ void BetterSafe::loadSafe(
 }
 
 std::vector<SafeLevel> BetterSafe::getMonth(int year, int month, GJTimedLevelType type) {
-    using SafeLevels = std::vector<SafeLevel>;
-
-    return ranges::reduce<SafeLevels>(safes[type], [year, month](SafeLevels& levels, const SafeLevel& level) {
-        ranges::push(levels, ranges::reduce<SafeLevels>(level.dates, [&level, year, month](SafeLevels& dates, const SafeDate& date) {
-            if (date.year == year && date.month == month) dates.push_back(level);
-        }));
-    });
+    std::vector<SafeLevel> result;
+    for (auto& level : safes[type]) {
+        for (auto& date : level.dates) {
+            if (date.year == year && date.month == month) result.push_back(level);
+        }
+    }
+    return result;
 }

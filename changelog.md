@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.2.2 (2025-07-31)
+- Fixed a bug where some demons in the calendar would crash the game with the "Demons In Between" mod enabled
+
 ## v1.2.1 (2025-07-26)
 - Added compatibility with "GodlikeFaces" by AdyaGD and meeeeee :3
 - Added settings to toggle the visibility of the day text and particles on uncompleted levels

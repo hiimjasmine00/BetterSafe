@@ -7,7 +7,6 @@
 #include <Geode/binding/GJSearchObject.hpp>
 #include <Geode/binding/LoadingCircle.hpp>
 #include <Geode/loader/Mod.hpp>
-#include <Geode/utils/ranges.hpp>
 
 using namespace geode::prelude;
 
@@ -206,13 +205,27 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);
     if (levelSafe.empty()) return setupMonth(nullptr);
 
-    auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick, ranges::reduce<std::string>(levelSafe,
-        [](std::string& str, const SafeLevel& level) { str += (str.empty() ? "" : ",") + fmt::to_string(level.levelID); }));
+    auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick);
+    if constexpr (std::is_same_v<gd::string, std::string>) {
+        auto& searchQuery = searchObject->m_searchQuery;
+        for (auto& level : levelSafe) {
+            if (!searchQuery.empty()) searchQuery += ',';
+            searchQuery += fmt::to_string(level.levelID);
+        }
+    }
+    else {
+        std::string searchQuery = searchObject->m_searchQuery;
+        for (auto& level : levelSafe) {
+            if (!searchQuery.empty()) searchQuery += ',';
+            searchQuery += fmt::to_string(level.levelID);
+        }
+        searchObject->m_searchQuery = searchQuery;
+    }
 
     auto glm = GameLevelManager::get();
     if (!refresh) {
-        std::string key = searchObject->getKey();
-        if (auto storedLevels = glm->getStoredOnlineLevels(key.substr(std::max(0, (int)key.size() - 256)).c_str())) return setupMonth(storedLevels);
+        std::string_view key = searchObject->getKey();
+        if (auto levels = glm->getStoredOnlineLevels(key.substr(std::max<ptrdiff_t>(0, key.size() - 256)).data())) return setupMonth(levels);
     }
 
     m_loadingCircle->setVisible(true);
@@ -251,10 +264,11 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     if (!mod->getSettingValue<bool>("sunday-first")) firstWeekday = (firstWeekday + 6) % 7;
 
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);
-    auto levelMap = ranges::reduce<std::unordered_map<int, GJGameLevel*>>(CCArrayExt<GJGameLevel*>(levels),
-        [](std::unordered_map<int, GJGameLevel*>& acc, GJGameLevel* obj) {
-            acc[obj->m_levelID.value()] = obj;
-        });
+
+    std::unordered_map<int, GJGameLevel*> levelMap;
+    for (auto level : CCArrayExt<GJGameLevel*>(levels)) {
+        levelMap[level->m_levelID.value()] = level;
+    }
 
     constexpr std::array daysPerMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     auto daysInMonth = m_month <= daysPerMonth.size() ? daysPerMonth[m_month - 1] : 0;
@@ -330,10 +344,10 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                 { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }
             };
             if (safeLevel.tier < difficulties.size()) {
-                difficulty = difficulties[safeLevel.tier];
+                auto diff = difficulties[safeLevel.tier];
                 diffFrame = fmt::format("hiimjustin000.demons_in_between/DIB_{:02}{}_btn_001.png",
-                    difficulty, enableLegendary && featureState == 3 ? "_4" : enableMythic && featureState == 4 ? "_5" : "");
-                diffPos += positions[difficulty];
+                    diff, enableLegendary && featureState == 3 ? "_4" : enableMythic && featureState == 4 ? "_5" : "");
+                diffPos += positions[diff];
             }
         }
 
