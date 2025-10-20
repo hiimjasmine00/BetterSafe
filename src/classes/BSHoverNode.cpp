@@ -49,7 +49,9 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     viewMenu->setID("view-menu");
     addChild(viewMenu);
 
-    auto closeButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_closeBtn_001.png", 0.5f, [this](auto) { close(); });
+    auto closeButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_closeBtn_001.png", 0.5f, [this](auto) {
+        close();
+    });
     closeButton->setPosition({ -40.0f, 50.0f });
     closeButton->setID("close-button");
     viewMenu->addChild(closeButton, 1);
@@ -57,7 +59,9 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     auto nameLabel = CCLabelBMFont::create(gameLevel->m_levelName.c_str(), "bigFont.fnt");
     nameLabel->setScale(0.5f);
     auto nameButton = CCMenuItemExt::createSpriteExtra(nameLabel, [this, gameLevel](auto) {
-        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder()) GameLevelManager::get()->gotoLevelPage(gameLevel);
+        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder()) {
+            GameLevelManager::get()->gotoLevelPage(gameLevel);
+        }
     });
     nameButton->setPosition({ 0.0f, 35.0f });
     nameButton->setID("name-button");
@@ -67,8 +71,9 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     creatorLabel->setScale(0.4f);
     auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [this, gameLevel](auto) {
         auto accountID = gameLevel->m_accountID.value();
-        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0)
+        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0) {
             ProfilePage::create(accountID, false)->show();
+        }
     });
     creatorButton->setPosition({ 0.0f, 23.0f });
     creatorButton->setID("creator-button");
@@ -94,7 +99,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
 
     auto starsLabel = CCLabelBMFont::create(fmt::to_string(gameLevel->m_stars.value()).c_str(), "bigFont.fnt");
     starsLabel->setScale(0.4f);
-    starsLabel->setColor({ 255, 255, (uint8_t)(255 - gsm->hasCompletedLevel(gameLevel) * 205) });
+    starsLabel->setColor(gsm->hasCompletedLevel(gameLevel) ? ccColor3B { 255, 255, 50 } : ccColor3B { 255, 255, 255 });
     starsLabel->setID("stars-label");
     starLayout->addChild(starsLabel);
 
@@ -108,11 +113,12 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
         auto coinStr = fmt::format("{}_{}", levelID, i);
         auto hasCoin = gsm->hasUserCoin(coinStr.c_str()) || gsm->hasPendingUserCoin(coinStr.c_str());
         auto coinSprite = CCSprite::createWithSpriteFrameName("usercoin_small01_001.png");
-        coinSprite->setColor({
-            (uint8_t)(165 + hasCoin * 90),
-            (uint8_t)(113 + coinsVerified * 52 + hasCoin * (62 + coinsVerified * 28)),
-            (uint8_t)(48 + coinsVerified * 117 + hasCoin * (17 + coinsVerified * 73))
-        });
+        if (coinsVerified) {
+            coinSprite->setColor(hasCoin ? ccColor3B { 255, 255, 255 } : ccColor3B { 165, 165, 165 });
+        }
+        else {
+            coinSprite->setColor(hasCoin ? ccColor3B { 255, 175, 75 } : ccColor3B { 165, 113, 48 });
+        }
         coinSprite->setID(fmt::format("coin-sprite-{}", i).c_str());
         starLayout->addChild(coinSprite);
     }

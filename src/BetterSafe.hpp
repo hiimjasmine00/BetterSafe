@@ -12,18 +12,14 @@ struct SafeLevel {
     int id = 0;
     int levelID = 0;
     std::vector<SafeDate> dates;
-    GJTimedLevelType type;
+    GJTimedLevelType type = GJTimedLevelType::Daily;
     int tier = 0;
 };
 
 class BetterSafe {
 public:
-    inline static std::map<GJTimedLevelType, std::vector<SafeLevel>> safes = {
-        { GJTimedLevelType::Daily, {} },
-        { GJTimedLevelType::Weekly, {} },
-        { GJTimedLevelType::Event, {} }
-    };
+    static std::map<GJTimedLevelType, std::vector<SafeLevel>> safes;
 
-    static void loadSafe(GJTimedLevelType, geode::EventListener<geode::utils::web::WebTask>*, std::function<void()>, std::function<void(int)>);
+    static void loadSafe(GJTimedLevelType, geode::EventListener<geode::utils::web::WebTask>&, std::function<void()>, std::function<void(int)>);
     static std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
 };

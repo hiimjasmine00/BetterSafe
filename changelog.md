@@ -1,4 +1,7 @@
 # Better Safe Changelog
+## v1.2.3 (2025-10-20)
+- Changed the month selection popup to be more user-friendly
+
 ## v1.2.2 (2025-07-31)
 - Fixed a bug where some demons in the calendar would crash the game with the "Demons In Between" mod enabled
 

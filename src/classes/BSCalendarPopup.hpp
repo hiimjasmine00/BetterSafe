@@ -28,7 +28,6 @@ protected:
 
     void closeHoverNode();
     void createHoverNode(CCMenuItemSpriteExtra*, const SafeLevel&, GJGameLevel*);
-    void createWeekdayLabel(const char*, int);
     void loadMonth(int, int, bool = false);
     void loadSafe(bool = false);
     void setupMonth(cocos2d::CCArray*);

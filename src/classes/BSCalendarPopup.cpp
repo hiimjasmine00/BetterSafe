@@ -32,18 +32,30 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
 
     if (type == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
 
+    constexpr std::array weekdays = {
+        std::make_pair("Mon", "mon-label"),
+        std::make_pair("Tue", "tue-label"),
+        std::make_pair("Wed", "wed-label"),
+        std::make_pair("Thu", "thu-label"),
+        std::make_pair("Fri", "fri-label"),
+        std::make_pair("Sat", "sat-label"),
+        std::make_pair("Sun", "sun-label")
+    };
+
     auto sundayFirst = Mod::get()->getSettingValue<bool>("sunday-first");
-    createWeekdayLabel("Mon", (int)sundayFirst);
-    createWeekdayLabel("Tue", (int)sundayFirst + 1);
-    createWeekdayLabel("Wed", (int)sundayFirst + 2);
-    createWeekdayLabel("Thu", (int)sundayFirst + 3);
-    createWeekdayLabel("Fri", (int)sundayFirst + 4);
-    createWeekdayLabel("Sat", (int)sundayFirst + 5);
-    createWeekdayLabel("Sun", sundayFirst ? 0 : 6);
+    for (int i = 0; i < weekdays.size(); i++) {
+        auto [text, id] = weekdays[(i + (sundayFirst ? 6 : 0)) % 7];
+        auto label = CCLabelBMFont::create(text, "bigFont.fnt");
+        label->setPosition({ i * 38.0f + 36.0f, 249.0f });
+        label->setScale(0.5f);
+        label->setID(id);
+        m_mainLayer->addChild(label);
+    }
 
     m_prevButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_arrow_01_001.png", 1.0f, [this](auto) {
-        if (m_year > m_minYear || (m_year == m_minYear && m_month > m_minMonth))
+        if (m_year > m_minYear || (m_year == m_minYear && m_month > m_minMonth)) {
             loadMonth(m_month == 1 ? m_year - 1 : m_year, m_month == 1 ? 12 : m_month - 1);
+        }
     });
     m_prevButton->setPosition({ -34.5f, 140.0f });
     m_prevButton->setVisible(false);
@@ -53,8 +65,9 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     auto nextButtonSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
     nextButtonSprite->setFlipX(true);
     m_nextButton = CCMenuItemExt::createSpriteExtra(nextButtonSprite, [this](auto) {
-        if (m_year < m_maxYear || (m_year == m_maxYear && m_month < m_maxMonth))
+        if (m_year < m_maxYear || (m_year == m_maxYear && m_month < m_maxMonth)) {
             loadMonth(m_month == 12 ? m_year + 1 : m_year, m_month == 12 ? 1 : m_month + 1);
+        }
     });
     m_nextButton->setPosition({ 334.5f, 140.0f });
     m_nextButton->setVisible(false);
@@ -67,7 +80,9 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     firstArrow->addChild(otherFirstArrow);
     firstArrow->setScale(0.4f);
     m_firstButton = CCMenuItemExt::createSpriteExtra(firstArrow, [this](auto) {
-        if (m_year > m_minYear || (m_year == m_minYear && m_month > m_minMonth)) loadMonth(m_minYear, m_minMonth);
+        if (m_year > m_minYear || (m_year == m_minYear && m_month > m_minMonth)) {
+            loadMonth(m_minYear, m_minMonth);
+        }
     });
     m_firstButton->setPosition({ -27.5f, 175.0f });
     m_firstButton->setVisible(false);
@@ -82,7 +97,9 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     lastArrow->addChild(otherLastArrow);
     lastArrow->setScale(0.4f);
     m_lastButton = CCMenuItemExt::createSpriteExtra(lastArrow, [this](auto) {
-        if (m_year < m_maxYear || (m_year == m_maxYear && m_month < m_maxMonth)) loadMonth(m_maxYear, m_maxMonth);
+        if (m_year < m_maxYear || (m_year == m_maxYear && m_month < m_maxMonth)) {
+            loadMonth(m_maxYear, m_maxMonth);
+        }
     });
     m_lastButton->setPosition({ 327.5f, 175.0f });
     m_lastButton->setVisible(false);
@@ -99,7 +116,9 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     m_monthLabel = CCLabelBMFont::create("", "goldFont.fnt");
     m_monthLabel->setScale(0.6f);
     m_monthButton = CCMenuItemExt::createSpriteExtra(m_monthLabel, [this](auto) {
-        BSSelectPopup::create(this, [this](int year, int month) { loadMonth(year, month); })->show();
+        BSSelectPopup::create(this, [this](int year, int month) {
+            loadMonth(year, month);
+        })->show();
     });
     m_monthButton->setPosition({ 150.0f, 265.0f });
     m_monthButton->setEnabled(false);
@@ -135,8 +154,8 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
     refreshButton->setID("refresh-button");
     m_buttonMenu->addChild(refreshButton);
 
-    handleTouchPriority(this);
     loadSafe();
+    handleTouchPriority(this);
     queueInMainThread([this] { m_initialized = true; });
 
     return true;
@@ -152,16 +171,8 @@ void BSCalendarPopup::closeHoverNode() {
     }
 }
 
-void BSCalendarPopup::createWeekdayLabel(const char* text, int idx) {
-    auto label = CCLabelBMFont::create(text, "bigFont.fnt");
-    label->setPosition({ idx * 38.0f + 36.0f, 249.0f });
-    label->setScale(0.5f);
-    label->setID(fmt::format("{}-label", string::toLower(text)));
-    m_mainLayer->addChild(label);
-}
-
 void BSCalendarPopup::loadSafe(bool refresh) {
-    BetterSafe::loadSafe(m_type, &m_listener, [this, refresh] {
+    BetterSafe::loadSafe(m_type, m_listener, [this, refresh] {
         auto& safe = BetterSafe::safes[m_type];
         if (safe.empty()) return;
 
@@ -207,24 +218,22 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
 
     auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick);
     #ifdef GEODE_IS_ANDROID
-    std::string searchQuery = searchObject->m_searchQuery;
-    for (auto& level : levelSafe) {
-        if (!searchQuery.empty()) searchQuery += ',';
-        searchQuery += fmt::to_string(level.levelID);
-    }
-    searchObject->m_searchQuery = searchQuery;
+    std::string searchQuery;
     #else
     auto& searchQuery = searchObject->m_searchQuery;
+    #endif
     for (auto& level : levelSafe) {
         if (!searchQuery.empty()) searchQuery += ',';
         searchQuery += fmt::to_string(level.levelID);
     }
-    #endif
+    GEODE_ANDROID(searchObject->m_searchQuery = searchQuery;)
 
     auto glm = GameLevelManager::get();
     if (!refresh) {
         std::string_view key = searchObject->getKey();
-        if (auto levels = glm->getStoredOnlineLevels(key.substr(std::max<ptrdiff_t>(0, key.size() - 256)).data())) return setupMonth(levels);
+        if (auto levels = glm->getStoredOnlineLevels(key.substr(std::max<ptrdiff_t>(0, key.size() - 256)).data())) {
+            return setupMonth(levels);
+        }
     }
 
     m_loadingCircle->setVisible(true);
@@ -271,7 +280,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
 
     constexpr std::array daysPerMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
     auto daysInMonth = m_month <= daysPerMonth.size() ? daysPerMonth[m_month - 1] : 0;
-    if (m_month == 2 && (m_year % 4 == 0 && (m_year % 100 != 0 || m_year % 400 == 0))) daysInMonth++;
+    if (m_month == 2 && m_year % 4 == 0 && (m_year % 100 != 0 || m_year % 400 == 0)) daysInMonth++;
 
     auto loader = Loader::get();
     auto demonsInBetween = loader->getLoadedMod("hiimjustin000.demons_in_between");
@@ -286,9 +295,10 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     auto sfc = CCSpriteFrameCache::get();
 
     for (int i = 0; i < daysInMonth; i++) {
-        auto safeLevelIt = std::ranges::find_if(levelSafe, [this, i = i + 1](const SafeLevel& level) {
-            return std::ranges::any_of(level.dates, [this, i](const SafeDate& date) {
-                return date.year == m_year && date.month == m_month && date.day == i;
+        auto d = i + 1;
+        auto safeLevelIt = std::ranges::find_if(levelSafe, [this, d](const SafeLevel& level) {
+            return std::ranges::any_of(level.dates, [this, d](const SafeDate& date) {
+                return date.year == m_year && date.month == m_month && date.day == d;
             });
         });
         if (safeLevelIt == levelSafe.end()) continue;
@@ -322,12 +332,15 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
 
         if (moreDifficulties) {
             auto stars = level->m_stars.value();
-            if (moreDifficulties->getSavedValue<bool>("casual", true) && difficulty == 3 && stars == 4)
+            if (moreDifficulties->getSavedValue<bool>("casual", true) && difficulty == 3 && stars == 4) {
                 diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty04{}.png", legacyDifficulties ? "_Legacy" : "");
-            else if (moreDifficulties->getSavedValue<bool>("tough", true) && difficulty == 4 && stars == 7)
+            }
+            else if (moreDifficulties->getSavedValue<bool>("tough", true) && difficulty == 4 && stars == 7) {
                 diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty07{}.png", legacyDifficulties ? "_Legacy" : "");
-            else if (moreDifficulties->getSavedValue<bool>("cruel", true) && difficulty == 5 && stars == 9)
+            }
+            else if (moreDifficulties->getSavedValue<bool>("cruel", true) && difficulty == 5 && stars == 9) {
                 diffFrame = fmt::format("uproxide.more_difficulties/MD_Difficulty09{}.png", legacyDifficulties ? "_Legacy" : "");
+            }
         }
 
         if (enableDifficulties && safeLevel.tier > 0) {
@@ -335,8 +348,8 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15,
                 16, 17, 18, 19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
             };
-            constexpr std::array<cocos2d::CCPoint, 21> positions = {
-                cocos2d::CCPoint { 0.0f, 0.0f },
+            constexpr std::array<CCPoint, 21> positions = {
+                CCPoint { 0.0f, 0.0f },
                 { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, -0.25f },
                 { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, 0.5f }, { -0.125f, 0.5f }, { -0.125f, 0.25f },
                 { -0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.0f, 0.5f },
@@ -354,17 +367,21 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
         diffSprite->updateFeatureState((GJFeatureState)featureState);
         auto diffIcon = CCSprite::createWithSpriteFrame(diffFrame.empty() ? diffSprite->displayFrame() : sfc->spriteFrameByName(diffFrame.c_str()));
         diffIcon->setPosition(diffPos);
-        diffIcon->setOpacity(255 - (completedLevel * 105));
+        diffIcon->setOpacity(completedLevel ? 150 : 255);
         clipNode->addChild(diffIcon);
 
         diffNode->addChild(clipNode);
 
         auto diffSize = diffSprite->getContentSize() / 2.0f;
-        for (Ref child = getChild(diffSprite, 0); diffSprite->getChildrenCount() > 0; child = getChild(diffSprite, 0)) {
+        for (Ref child = diffSprite->getChildByIndex(0); diffSprite->getChildrenCount() > 0; child = diffSprite->getChildByIndex(0)) {
             child->removeFromParentAndCleanup(false);
             child->setPosition(child->getPosition() - diffSize + CCPoint { 20.0f, 14.5f });
-            if (auto rgbaProtocol = typeinfo_cast<CCRGBAProtocol*>(child.data())) rgbaProtocol->setOpacity(255 - (completedLevel * 105));
-            else if (typeinfo_cast<CCParticleSystem*>(child.data())) child->setVisible(showParticles && !completedLevel);
+            if (auto rgbaProtocol = typeinfo_cast<CCRGBAProtocol*>(child.data())) {
+                rgbaProtocol->setOpacity(completedLevel ? 150 : 255);
+            }
+            else if (typeinfo_cast<CCParticleSystem*>(child.data())) {
+                child->setVisible(showParticles && !completedLevel);
+            }
             diffNode->addChild(child);
         }
 
@@ -374,30 +391,31 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             diffNode->addChild(completedIcon, 1);
         }
         else if (showDays) {
-            auto dayLabel = CCLabelBMFont::create(fmt::to_string(i + 1).c_str(), "bigFont.fnt");
+            auto dayLabel = CCLabelBMFont::create(fmt::to_string(d).c_str(), "bigFont.fnt");
             dayLabel->setScale(0.4f);
             dayLabel->setPosition({ 40.0f, 0.0f });
             dayLabel->setAnchorPoint({ 1.0f, 0.0f });
             diffNode->addChild(dayLabel, 1);
         }
 
-        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffNode, [this, i, level, safeLevel](CCMenuItemSpriteExtra* sender) {
+        auto hoverButton = CCMenuItemExt::createSpriteExtra(diffNode, [this, d, level, safeLevel](CCMenuItemSpriteExtra* sender) {
             if (m_hoverNode) {
                 auto [year, month, day] = m_currentDay;
                 m_hoverNode->close();
-                if (year == m_year && month == m_month && i + 1 == day) return;
+                if (year == m_year && month == m_month && d == day) return;
             }
             createHoverNode(sender, safeLevel, level);
             m_currentDay.year = m_year;
             m_currentDay.month = m_month;
-            m_currentDay.day = i + 1;
+            m_currentDay.day = d;
         });
         hoverButton->setPosition({ (i + firstWeekday) % 7 * 38.0f + 36.0f, 219.0f - (int)((i + firstWeekday) / 7) * 38.0f });
-        hoverButton->setID(fmt::format("level-button-{}", i + 1));
+        hoverButton->setID(fmt::format("level-button-{}", d));
         m_calendarMenu->addChild(hoverButton);
 
-        if (m_year == m_currentDay.year && m_month == m_currentDay.month && i + 1 == m_currentDay.day)
+        if (m_year == m_currentDay.year && m_month == m_currentDay.month && d == m_currentDay.day) {
             createHoverNode(hoverButton, safeLevel, level);
+        }
     }
 }
 
