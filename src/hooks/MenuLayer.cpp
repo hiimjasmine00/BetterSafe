@@ -1,22 +1,14 @@
 #include "../classes/BSCalendarPopup.hpp"
 #include <Geode/modify/MenuLayer.hpp>
+#include <jasmine/button.hpp>
+#include <jasmine/hook.hpp>
 
 using namespace geode::prelude;
+using namespace jasmine::button;
 
 class $modify(BSMenuLayer, MenuLayer) {
-    struct Fields {
-        CCObject* m_dailySafeListener;
-        SEL_MenuHandler m_dailySafeSelector;
-        CCObject* m_weeklySafeListener;
-        SEL_MenuHandler m_weeklySafeSelector;
-        CCObject* m_eventSafeListener;
-        SEL_MenuHandler m_eventSafeSelector;
-    };
-
     static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
-        if (auto it = self.m_hooks.find("MenuLayer::init"); it != self.m_hooks.end()) {
-            auto hook = it->second.get();
-            hook->setAutoEnable(false);
+        if (auto hook = jasmine::hook::get(self.m_hooks, "MenuLayer::init", false)) {
             if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
                 if (overcharged->isEnabled()) {
                     hook->setAutoEnable(true);
@@ -24,7 +16,7 @@ class $modify(BSMenuLayer, MenuLayer) {
                 }
                 else new EventListener([hook](ModStateEvent* e) {
                     afterPriority(hook, e->getMod());
-                    if (auto err = hook->enable().err()) log::error("Failed to enable MenuLayer::init hook: {}", *err);
+                    jasmine::hook::toggle(hook, true);
                 }, ModStateFilter(overcharged, ModEventType::Loaded));
             }
         }
@@ -51,44 +43,45 @@ class $modify(BSMenuLayer, MenuLayer) {
         auto dailiesMenu = redashMenu->getChildByID("ninxout.redash/dailies-menu");
         if (!dailiesMenu) return true;
 
-        auto f = m_fields.self();
-
-        auto dailyNode = dailiesMenu->getChildByID("daily-node");
-        if (auto dailySafeButton = static_cast<CCMenuItem*>(dailyNode ? dailyNode->getChildByIDRecursive("safe-button") : nullptr)) {
-            f->m_dailySafeListener = dailySafeButton->m_pListener;
-            f->m_dailySafeSelector = dailySafeButton->m_pfnSelector;
-            dailySafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheDailySafe));
+        if (auto dailyNode = dailiesMenu->getChildByID("daily-node")) {
+            ButtonHooker::create(
+                static_cast<CCMenuItem*>(dailyNode->getChildByIDRecursive("safe-button")),
+                this, menu_selector(BSMenuLayer::onTheDailySafe)
+            );
         }
 
-        auto weeklyNode = dailiesMenu->getChildByID("weekly-node");
-        if (auto weeklySafeButton = static_cast<CCMenuItem*>(weeklyNode ? weeklyNode->getChildByIDRecursive("safe-button") : nullptr)) {
-            f->m_weeklySafeListener = weeklySafeButton->m_pListener;
-            f->m_weeklySafeSelector = weeklySafeButton->m_pfnSelector;
-            weeklySafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheWeeklySafe));
+        if (auto weeklyNode = dailiesMenu->getChildByID("weekly-node")) {
+            ButtonHooker::create(
+                static_cast<CCMenuItem*>(weeklyNode->getChildByIDRecursive("safe-button")),
+                this, menu_selector(BSMenuLayer::onTheWeeklySafe)
+            );
         }
 
-        auto eventNode = dailiesMenu->getChildByID("event-node");
-        if (auto eventSafeButton = static_cast<CCMenuItem*>(eventNode ? eventNode->getChildByIDRecursive("safe-button") : nullptr)) {
-            f->m_eventSafeListener = eventSafeButton->m_pListener;
-            f->m_eventSafeSelector = eventSafeButton->m_pfnSelector;
-            eventSafeButton->setTarget(this, menu_selector(BSMenuLayer::onTheEventSafe));
+        if (auto eventNode = dailiesMenu->getChildByID("event-node")) {
+            ButtonHooker::create(
+                static_cast<CCMenuItem*>(eventNode->getChildByIDRecursive("safe-button")),
+                this, menu_selector(BSMenuLayer::onTheEventSafe)
+            );
         }
 
         return true;
     }
 
-    void onTheDailySafe(CCObject*) {
-        auto f = m_fields.self();
-        BSCalendarPopup::create(f->m_dailySafeListener, f->m_dailySafeSelector, GJTimedLevelType::Daily)->show();
+    void onTheDailySafe(CCObject* sender) {
+        if (auto hooker = static_cast<ButtonHooker*>(static_cast<CCNode*>(sender)->getUserObject("hooker"_spr))) {
+            BSCalendarPopup::create(hooker->m_listener, hooker->m_selector, GJTimedLevelType::Daily)->show();
+        }
     }
 
-    void onTheWeeklySafe(CCObject*) {
-        auto f = m_fields.self();
-        BSCalendarPopup::create(f->m_weeklySafeListener, f->m_weeklySafeSelector, GJTimedLevelType::Weekly)->show();
+    void onTheWeeklySafe(CCObject* sender) {
+        if (auto hooker = static_cast<ButtonHooker*>(static_cast<CCNode*>(sender)->getUserObject("hooker"_spr))) {
+            BSCalendarPopup::create(hooker->m_listener, hooker->m_selector, GJTimedLevelType::Weekly)->show();
+        }
     }
 
-    void onTheEventSafe(CCObject*) {
-        auto f = m_fields.self();
-        BSCalendarPopup::create(f->m_eventSafeListener, f->m_eventSafeSelector, GJTimedLevelType::Event)->show();
+    void onTheEventSafe(CCObject* sender) {
+        if (auto hooker = static_cast<ButtonHooker*>(static_cast<CCNode*>(sender)->getUserObject("hooker"_spr))) {
+            BSCalendarPopup::create(hooker->m_listener, hooker->m_selector, GJTimedLevelType::Event)->show();
+        }
     }
 };

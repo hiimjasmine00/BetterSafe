@@ -4,9 +4,10 @@
 #include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GJDifficultySprite.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
-#include <Geode/binding/GJSearchObject.hpp>
 #include <Geode/binding/LoadingCircle.hpp>
 #include <Geode/loader/Mod.hpp>
+#include <jasmine/search.hpp>
+#include <jasmine/setting.hpp>
 
 using namespace geode::prelude;
 
@@ -42,7 +43,7 @@ bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelT
         std::make_pair("Sun", "sun-label")
     };
 
-    auto sundayFirst = Mod::get()->getSettingValue<bool>("sunday-first");
+    auto sundayFirst = jasmine::setting::getValue<bool>("sunday-first");
     for (int i = 0; i < weekdays.size(); i++) {
         auto [text, id] = weekdays[(i + (sundayFirst ? 6 : 0)) % 7];
         auto label = CCLabelBMFont::create(text, "bigFont.fnt");
@@ -216,22 +217,13 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);
     if (levelSafe.empty()) return setupMonth(nullptr);
 
-    auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick);
-    #ifdef GEODE_IS_ANDROID
-    std::string searchQuery;
-    #else
-    auto& searchQuery = searchObject->m_searchQuery;
-    #endif
-    for (auto& level : levelSafe) {
-        if (!searchQuery.empty()) searchQuery += ',';
-        searchQuery += fmt::to_string(level.levelID);
-    }
-    GEODE_ANDROID(searchObject->m_searchQuery = searchQuery;)
+    auto searchObject = jasmine::search::getObject(levelSafe, [](const SafeLevel& level) {
+        return fmt::to_string(level.levelID);
+    });
 
     auto glm = GameLevelManager::get();
     if (!refresh) {
-        std::string_view key = searchObject->getKey();
-        if (auto levels = glm->getStoredOnlineLevels(key.substr(std::max<ptrdiff_t>(0, key.size() - 256)).data())) {
+        if (auto levels = glm->getStoredOnlineLevels(jasmine::search::getKey(searchObject))) {
             return setupMonth(levels);
         }
     }
@@ -268,8 +260,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
 
     tm timeinfo = { 0, 0, 0, 1, m_month - 1, m_year - 1900 };
     auto firstWeekday = fmt::localtime(mktime(&timeinfo)).tm_wday;
-    auto mod = Mod::get();
-    if (!mod->getSettingValue<bool>("sunday-first")) firstWeekday = (firstWeekday + 6) % 7;
+    if (!jasmine::setting::getValue<bool>("sunday-first")) firstWeekday = (firstWeekday + 6) % 7;
 
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);
 
@@ -289,9 +280,9 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     auto enableMythic = demonsInBetween && demonsInBetween->getSettingValue<bool>("enable-mythic");
     auto moreDifficulties = loader->getLoadedMod("uproxide.more_difficulties");
     auto legacyDifficulties = moreDifficulties && moreDifficulties->getSettingValue<bool>("legacy-difficulties");
-    auto showCheckmarks = mod->getSettingValue<bool>("show-checkmarks");
-    auto showDays = mod->getSettingValue<bool>("show-days");
-    auto showParticles = mod->getSettingValue<bool>("show-particles");
+    auto showCheckmarks = jasmine::setting::getValue<bool>("show-checkmarks");
+    auto showDays = jasmine::setting::getValue<bool>("show-days");
+    auto showParticles = jasmine::setting::getValue<bool>("show-particles");
     auto sfc = CCSpriteFrameCache::get();
 
     for (int i = 0; i < daysInMonth; i++) {
@@ -323,8 +314,8 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
         clipNode->setContentSize({ 40.0f, 40.0f });
         clipNode->setAnchorPoint({ 0.5f, 0.5f });
 
-        auto difficulty = level->m_demon > 0 ? level->m_demonDifficulty > 0 ? level->m_demonDifficulty + 4 : 6 :
-            level->m_autoLevel ? -1 : level->m_ratings < 5 ? 0 : level->m_ratingsSum / level->m_ratings;
+        auto difficulty = level->m_demon > 0 ? GJGameLevel::demonIconForDifficulty((DemonDifficultyType)level->m_demonDifficulty) :
+            level->m_autoLevel ? -1 : level->getAverageDifficulty();
         auto featureState = level->m_featured > 0 ? level->m_isEpic + 1 : 0;
 
         std::string diffFrame;

@@ -1,5 +1,7 @@
 #include "BetterSafe.hpp"
-#include <Geode/utils/string.hpp>
+#include <jasmine/convert.hpp>
+#include <jasmine/string.hpp>
+#include <jasmine/web.hpp>
 
 using namespace geode::prelude;
 
@@ -27,13 +29,8 @@ void BetterSafe::loadSafe(
         if (auto res = e->getValue()) {
             if (!res->ok()) return failure(res->code());
 
-            auto json = res->json().andThen([](matjson::Value&& v) {
-                return std::move(v).asArray();
-            });
-            if (!json.isOk()) return success();
-
             auto& safe = safes[type];
-            for (auto& value : json.unwrap()) {
+            for (auto& value : jasmine::web::getArray(res)) {
                 auto id = value.get<int>("id");
                 if (!id.isOk()) continue;
 
@@ -44,18 +41,14 @@ void BetterSafe::loadSafe(
                     std::vector<SafeDate> dates;
                     for (auto& value : v) {
                         auto& date = dates.emplace_back();
-                        auto str = value.asString();
-                        if (!str.isOk()) continue;
-
-                        auto split = string::split(str.unwrap(), "-");
-                        if (split.size() < 3) continue;
-
-                        auto& year = split[0];
-                        std::from_chars(year.data(), year.data() + year.size(), date.year);
-                        auto& month = split[1];
-                        std::from_chars(month.data(), month.data() + month.size(), date.month);
-                        auto& day = split[2];
-                        std::from_chars(day.data(), day.data() + day.size(), date.day);
+                        if (auto str = value.asString()) {
+                            auto split = jasmine::string::split(str.unwrap(), '-');
+                            if (split.size() >= 3) {
+                                jasmine::convert::toInt(split[0], date.year);
+                                jasmine::convert::toInt(split[1], date.month);
+                                jasmine::convert::toInt(split[2], date.day);
+                            }
+                        }
                     }
                     return dates;
                 });
