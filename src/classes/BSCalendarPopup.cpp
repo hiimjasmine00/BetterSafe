@@ -13,7 +13,7 @@ using namespace geode::prelude;
 
 BSCalendarPopup* BSCalendarPopup::create(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelType type) {
     auto ret = new BSCalendarPopup();
-    if (ret->initAnchored(300.0f, 280.0f, obj, onSafe, type, type == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png")) {
+    if (ret->init(obj, onSafe, type)) {
         ret->autorelease();
         return ret;
     }
@@ -21,7 +21,9 @@ BSCalendarPopup* BSCalendarPopup::create(CCObject* obj, SEL_MenuHandler onSafe, 
     return nullptr;
 }
 
-bool BSCalendarPopup::setup(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelType type) {
+bool BSCalendarPopup::init(CCObject* obj, SEL_MenuHandler onSafe, GJTimedLevelType type) {
+    if (!Popup::init(300.0f, 280.0f, type == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png")) return false;
+
     setID("BSCalendarPopup");
     m_mainLayer->setID("main-layer");
     m_buttonMenu->setID("button-menu");
@@ -177,7 +179,7 @@ void BSCalendarPopup::loadSafe(bool refresh) {
         auto& safe = BetterSafe::safes[m_type];
         if (safe.empty()) return;
 
-        auto timeinfo = fmt::localtime(time(0));
+        auto timeinfo = localtime(time(0));
         auto currentYear = timeinfo.tm_year + 1900;
         auto currentMonth = timeinfo.tm_mon + 1;
 
@@ -259,7 +261,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     if (!levels) return;
 
     tm timeinfo = { 0, 0, 0, 1, m_month - 1, m_year - 1900 };
-    auto firstWeekday = fmt::localtime(mktime(&timeinfo)).tm_wday;
+    auto firstWeekday = localtime(mktime(&timeinfo)).tm_wday;
     if (!jasmine::setting::getValue<bool>("sunday-first")) firstWeekday = (firstWeekday + 6) % 7;
 
     auto levelSafe = BetterSafe::getMonth(m_year, m_month, m_type);

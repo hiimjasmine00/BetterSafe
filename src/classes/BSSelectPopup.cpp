@@ -6,13 +6,7 @@ using namespace geode::prelude;
 
 BSSelectPopup* BSSelectPopup::create(BSCalendarPopup* popup, SelectMonthCallback callback) {
     auto ret = new BSSelectPopup();
-    if (ret->initAnchored(
-        300.0f,
-        150.0f,
-        popup,
-        std::move(callback),
-        popup->getType() == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png"
-    )) {
+    if (ret->init(popup, std::move(callback))) {
         ret->autorelease();
         return ret;
     }
@@ -20,7 +14,10 @@ BSSelectPopup* BSSelectPopup::create(BSCalendarPopup* popup, SelectMonthCallback
     return nullptr;
 }
 
-bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) {
+bool BSSelectPopup::init(BSCalendarPopup* popup, SelectMonthCallback callback) {
+    auto type = popup->getType();
+    if (!Popup::init(300.0f, 150.0f, type == GJTimedLevelType::Daily ? "GJ_square01.png" : "GJ_square05.png")) return false;
+
     setID("BSSelectPopup");
     setTitle("Select Month");
     m_title->setID("select-date-title");
@@ -38,7 +35,7 @@ bool BSSelectPopup::setup(BSCalendarPopup* popup, SelectMonthCallback callback) 
     m_maxMonth = popup->getMaxMonth();
     m_buttons = CCArray::create();
 
-    if (popup->getType() == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
+    if (type == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
 
     for (int i = 0; i < months.size(); i++) {
         auto month = i + 1;

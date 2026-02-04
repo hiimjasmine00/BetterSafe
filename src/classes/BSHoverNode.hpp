@@ -1,7 +1,7 @@
 #include "../BetterSafe.hpp"
 #include <cocos2d.h>
 
-using HoverCallback = std::function<void()>;
+using HoverCallback = geode::Function<void()>;
 
 class BSHoverNode : public cocos2d::CCLayer {
 protected:

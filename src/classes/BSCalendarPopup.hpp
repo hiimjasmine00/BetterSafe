@@ -2,9 +2,9 @@
 #include <Geode/binding/LevelManagerDelegate.hpp>
 #include <Geode/ui/Popup.hpp>
 
-class BSCalendarPopup : public geode::Popup<cocos2d::CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType>, public LevelManagerDelegate {
+class BSCalendarPopup : public geode::Popup, public LevelManagerDelegate {
 protected:
-    geode::EventListener<geode::utils::web::WebTask> m_listener;
+    geode::async::TaskHolder<geode::utils::web::WebResponse> m_listener;
     GJTimedLevelType m_type;
     int m_year;
     int m_minYear;
@@ -24,7 +24,7 @@ protected:
     SafeDate m_currentDay;
     bool m_initialized;
 
-    bool setup(CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType) override;
+    bool init(cocos2d::CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType);
 
     void closeHoverNode();
     void createHoverNode(CCMenuItemSpriteExtra*, const SafeLevel&, GJGameLevel*);
@@ -32,7 +32,7 @@ protected:
     void loadSafe(bool = false);
     void setupMonth(cocos2d::CCArray*);
 public:
-    static BSCalendarPopup* create(CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType);
+    static BSCalendarPopup* create(cocos2d::CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType);
 
     GJTimedLevelType getType() const { return m_type; }
     int getYear() const { return m_year; }

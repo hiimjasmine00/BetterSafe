@@ -4,6 +4,7 @@
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/ProfilePage.hpp>
 #include <Geode/utils/cocos.hpp>
+#include <jasmine/string.hpp>
 
 using namespace geode::prelude;
 
@@ -67,7 +68,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     nameButton->setID("name-button");
     viewMenu->addChild(nameButton);
 
-    auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", GEODE_ANDROID(std::string)(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
+    auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", JASMINE_STRING(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
     creatorLabel->setScale(0.4f);
     auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [this, gameLevel](auto) {
         auto accountID = gameLevel->m_accountID.value();

@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-constexpr std::array urls = {
+constexpr std::array<std::string_view, 3> urls = {
     "https://the-safe.hiimjasmine00.com/daily",
     "https://the-safe.hiimjasmine00.com/weekly",
     "https://the-safe.hiimjasmine00.com/event"
@@ -19,15 +19,16 @@ std::map<GJTimedLevelType, std::vector<SafeLevel>> BetterSafe::safes = {
 
 void BetterSafe::loadSafe(
     GJTimedLevelType type,
-    EventListener<web::WebTask>& listener,
-    std::function<void()> success,
-    std::function<void(int)> failure
+    TaskHolder<web::WebResponse>& listener,
+    geode::Function<void()> success,
+    geode::Function<void(int)> failure
 ) {
     if (!safes[type].empty()) return success();
 
-    listener.bind([failure = std::move(failure), success = std::move(success), type](web::WebTask::Event* e) {
-        if (auto res = e->getValue()) {
-            if (!res->ok()) return failure(res->code());
+    listener.spawn(
+        web::WebRequest().get(std::string(urls[(int)type])),
+        [failure = std::move(failure), success = std::move(success), type](web::WebResponse res) mutable {
+            if (!res.ok()) return failure(res.code());
 
             auto& safe = safes[type];
             for (auto& value : jasmine::web::getArray(res)) {
@@ -44,9 +45,9 @@ void BetterSafe::loadSafe(
                         if (auto str = value.asString()) {
                             auto split = jasmine::string::split(str.unwrap(), '-');
                             if (split.size() >= 3) {
-                                jasmine::convert::toInt(split[0], date.year);
-                                jasmine::convert::toInt(split[1], date.month);
-                                jasmine::convert::toInt(split[2], date.day);
+                                jasmine::convert::to(split[0], date.year);
+                                jasmine::convert::to(split[1], date.month);
+                                jasmine::convert::to(split[2], date.day);
                             }
                         }
                     }
@@ -62,9 +63,7 @@ void BetterSafe::loadSafe(
 
             success();
         }
-    });
-
-    listener.setFilter(web::WebRequest().get(urls[(int)type]));
+    );
 }
 
 std::vector<SafeLevel> BetterSafe::getMonth(int year, int month, GJTimedLevelType type) {

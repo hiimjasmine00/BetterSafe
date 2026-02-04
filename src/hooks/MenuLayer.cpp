@@ -12,26 +12,16 @@ class $modify(BSMenuLayer, MenuLayer) {
             if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
                 if (overcharged->isEnabled()) {
                     hook->setAutoEnable(true);
-                    afterPriority(hook, overcharged);
+                    ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>::setHookPriorityAfterPost(hook, overcharged);
                 }
-                else new EventListener([hook](ModStateEvent* e) {
-                    afterPriority(hook, e->getMod());
-                    jasmine::hook::toggle(hook, true);
-                }, ModStateFilter(overcharged, ModEventType::Loaded));
+                else {
+                    ModStateEvent(ModEventType::Loaded, overcharged).listen([hook, overcharged] {
+                        ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>::setHookPriorityAfterPost(hook, overcharged);
+                        jasmine::hook::toggle(hook, true);
+                    }).leak();
+                }
             }
         }
-    }
-
-    static void afterPriority(Hook* hook, Mod* mod) {
-        auto address = hook->getAddress();
-        auto modHooks = mod->getHooks();
-        auto modHook = std::ranges::find_if(modHooks, [address](Hook* h) {
-            return h->getAddress() == address;
-        });
-        if (modHook == modHooks.end()) return log::error("Failed to find MenuLayer::init hook in ninxout.redash");
-
-        auto priority = (*modHook)->getPriority();
-        if (hook->getPriority() >= priority) hook->setPriority(priority - 1);
     }
 
     bool init() {

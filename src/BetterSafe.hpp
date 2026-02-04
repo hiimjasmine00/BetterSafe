@@ -20,6 +20,8 @@ class BetterSafe {
 public:
     static std::map<GJTimedLevelType, std::vector<SafeLevel>> safes;
 
-    static void loadSafe(GJTimedLevelType, geode::EventListener<geode::utils::web::WebTask>&, std::function<void()>, std::function<void(int)>);
+    static void loadSafe(
+        GJTimedLevelType, geode::async::TaskHolder<geode::utils::web::WebResponse>&, geode::Function<void()>, geode::Function<void(int)>
+    );
     static std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
 };

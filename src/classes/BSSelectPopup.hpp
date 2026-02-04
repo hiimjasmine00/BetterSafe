@@ -2,9 +2,9 @@
 
 class BSCalendarPopup;
 
-using SelectMonthCallback = std::function<void(int, int)>;
+using SelectMonthCallback = geode::Function<void(int, int)>;
 
-class BSSelectPopup : public geode::Popup<BSCalendarPopup*, SelectMonthCallback> {
+class BSSelectPopup : public geode::Popup {
 protected:
     SelectMonthCallback m_callback;
     int m_year;
@@ -16,7 +16,7 @@ protected:
     CCMenuItemSpriteExtra* m_prevButton;
     CCMenuItemSpriteExtra* m_nextButton;
 
-    bool setup(BSCalendarPopup*, SelectMonthCallback) override;
+    bool init(BSCalendarPopup*, SelectMonthCallback);
     void page(int);
 public:
     static constexpr std::array months = {
