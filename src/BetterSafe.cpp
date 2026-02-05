@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-constexpr std::array<std::string_view, 3> urls = {
+std::array<std::string, 3> urls = {
     "https://the-safe.hiimjasmine00.com/daily",
     "https://the-safe.hiimjasmine00.com/weekly",
     "https://the-safe.hiimjasmine00.com/event"
@@ -18,15 +18,12 @@ std::map<GJTimedLevelType, std::vector<SafeLevel>> BetterSafe::safes = {
 };
 
 void BetterSafe::loadSafe(
-    GJTimedLevelType type,
-    TaskHolder<web::WebResponse>& listener,
-    geode::Function<void()> success,
-    geode::Function<void(int)> failure
+    GJTimedLevelType type, TaskHolder<web::WebResponse>& listener, geode::Function<void()> success, geode::Function<void(int)> failure
 ) {
     if (!safes[type].empty()) return success();
 
     listener.spawn(
-        web::WebRequest().get(std::string(urls[(int)type])),
+        web::WebRequest().get(urls[(int)type]),
         [failure = std::move(failure), success = std::move(success), type](web::WebResponse res) mutable {
             if (!res.ok()) return failure(res.code());
 

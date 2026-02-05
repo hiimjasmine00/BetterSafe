@@ -16,12 +16,12 @@ struct SafeLevel {
     int tier = 0;
 };
 
-class BetterSafe {
-public:
-    static std::map<GJTimedLevelType, std::vector<SafeLevel>> safes;
+namespace BetterSafe {
+    extern std::map<GJTimedLevelType, std::vector<SafeLevel>> safes;
 
-    static void loadSafe(
-        GJTimedLevelType, geode::async::TaskHolder<geode::utils::web::WebResponse>&, geode::Function<void()>, geode::Function<void(int)>
+    void loadSafe(
+        GJTimedLevelType type, geode::async::TaskHolder<geode::utils::web::WebResponse>& listener,
+        geode::Function<void()> success, geode::Function<void(int)> failure
     );
-    static std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
-};
+    std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
+}
