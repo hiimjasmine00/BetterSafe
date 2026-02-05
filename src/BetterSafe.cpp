@@ -1,6 +1,5 @@
 #include "BetterSafe.hpp"
 #include <jasmine/convert.hpp>
-#include <jasmine/string.hpp>
 #include <jasmine/web.hpp>
 
 using namespace geode::prelude;
@@ -17,9 +16,7 @@ std::map<GJTimedLevelType, std::vector<SafeLevel>> BetterSafe::safes = {
     { GJTimedLevelType::Event, {} }
 };
 
-void BetterSafe::loadSafe(
-    GJTimedLevelType type, TaskHolder<web::WebResponse>& listener, geode::Function<void()> success, geode::Function<void(int)> failure
-) {
+void BetterSafe::loadSafe(GJTimedLevelType type, TaskHolder<web::WebResponse>& listener, Function<void()> success, Function<void(int)> failure) {
     if (!safes[type].empty()) return success();
 
     listener.spawn(
@@ -40,7 +37,7 @@ void BetterSafe::loadSafe(
                     for (auto& value : v) {
                         auto& date = dates.emplace_back();
                         if (auto str = value.asString()) {
-                            auto split = jasmine::string::split(str.unwrap(), '-');
+                            auto split = string::splitView(str.unwrap(), "-");
                             if (split.size() >= 3) {
                                 jasmine::convert::to(split[0], date.year);
                                 jasmine::convert::to(split[1], date.month);
