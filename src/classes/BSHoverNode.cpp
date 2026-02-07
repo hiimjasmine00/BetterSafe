@@ -3,6 +3,7 @@
 #include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/ProfilePage.hpp>
+#include <Geode/ui/NineSlice.hpp>
 #include <Geode/utils/cocos.hpp>
 #include <jasmine/string.hpp>
 
@@ -30,7 +31,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
 
     m_callback = std::move(callback);
 
-    auto background = CCScale9Sprite::create("square02_001.png");
+    auto background = NineSlice::create("square02_001.png");
     background->setContentSize({ 80.0f, 50.0f });
     background->setPosition({ 40.0f, 25.0f });
     background->setColor({ 0, 0, 0 });
@@ -104,7 +105,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     starsLabel->setID("stars-label");
     starLayout->addChild(starsLabel);
 
-    auto starSprite = CCSprite::createWithSpriteFrameName(gameLevel->m_levelLength == 5 ? "moon_small01_001.png" : "star_small01_001.png");
+    auto starSprite = CCSprite::createWithSpriteFrameName(gameLevel->isPlatformer() ? "moon_small01_001.png" : "star_small01_001.png");
     starSprite->setID("star-sprite");
     starLayout->addChild(starSprite);
 

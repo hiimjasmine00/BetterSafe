@@ -33,7 +33,7 @@ bool BSSelectPopup::init(BSCalendarPopup* popup, SelectMonthCallback callback) {
     m_minMonth = popup->getMinMonth();
     m_maxYear = popup->getMaxYear();
     m_maxMonth = popup->getMaxMonth();
-    m_buttons = CCArray::create();
+    m_buttons.reserve(months.size());
 
     if (type == GJTimedLevelType::Event) m_bgSprite->setColor({ 190, 47, 242 });
 
@@ -48,7 +48,7 @@ bool BSSelectPopup::init(BSCalendarPopup* popup, SelectMonthCallback callback) {
         monthButton->setPosition({ (i % 4) * 70.0f + 50.0f, 100.0f - floorf(i / 4.0f) * 35.0f });
         monthButton->setID(fmt::format("month-button-{}", month));
         m_buttonMenu->addChild(monthButton);
-        m_buttons->addObject(monthButton);
+        m_buttons.push_back(monthButton);
     }
 
     m_prevButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_arrow_03_001.png", 1.0f, [this, popup](auto) {
@@ -79,23 +79,23 @@ void BSSelectPopup::page(int year) {
 
     if (m_year == m_minYear) {
         m_prevButton->setVisible(false);
-        for (int i = 0; i < m_buttons->count(); i++) {
-            static_cast<CCNode*>(m_buttons->objectAtIndex(i))->setVisible(i + 1 >= m_minMonth);
+        for (int i = 0; i < m_buttons.size(); i++) {
+            m_buttons[i]->setVisible(i + 1 >= m_minMonth);
         }
     }
     else m_prevButton->setVisible(true);
 
     if (m_year == m_maxYear) {
         m_nextButton->setVisible(false);
-        for (int i = 0; i < m_buttons->count(); i++) {
-            static_cast<CCNode*>(m_buttons->objectAtIndex(i))->setVisible(i + 1 <= m_maxMonth);
+        for (int i = 0; i < m_buttons.size(); i++) {
+            m_buttons[i]->setVisible(i + 1 <= m_maxMonth);
         }
     }
     else m_nextButton->setVisible(true);
 
     if (m_year > m_minYear && m_year < m_maxYear) {
-        for (int i = 0; i < m_buttons->count(); i++) {
-            static_cast<CCNode*>(m_buttons->objectAtIndex(i))->setVisible(true);
+        for (int i = 0; i < m_buttons.size(); i++) {
+            m_buttons[i]->setVisible(true);
         }
     }
 }

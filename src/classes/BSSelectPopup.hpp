@@ -12,7 +12,7 @@ protected:
     int m_minYear;
     int m_maxMonth;
     int m_maxYear;
-    geode::Ref<cocos2d::CCArray> m_buttons;
+    std::vector<CCMenuItemSpriteExtra*> m_buttons;
     CCMenuItemSpriteExtra* m_prevButton;
     CCMenuItemSpriteExtra* m_nextButton;
 
