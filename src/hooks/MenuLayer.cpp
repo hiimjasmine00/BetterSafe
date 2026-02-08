@@ -14,7 +14,7 @@ class $modify(BSMenuLayer, MenuLayer) {
                     hook->setAutoEnable(true);
                     ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>::setHookPriorityAfterPost(hook, overcharged);
                 }
-                else {
+                else if (overcharged->shouldLoad()) {
                     ModStateEvent(ModEventType::Loaded, overcharged).listen([hook, overcharged] {
                         ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>::setHookPriorityAfterPost(hook, overcharged);
                         jasmine::hook::toggle(hook, true);
