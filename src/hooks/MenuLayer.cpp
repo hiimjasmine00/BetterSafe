@@ -10,7 +10,7 @@ class $modify(BSMenuLayer, MenuLayer) {
     static void onModify(ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>& self) {
         if (auto hook = jasmine::hook::get(self.m_hooks, "MenuLayer::init", false)) {
             if (auto overcharged = Loader::get()->getInstalledMod("ninxout.redash")) {
-                if (overcharged->isEnabled()) {
+                if (overcharged->isLoaded()) {
                     hook->setAutoEnable(true);
                     ModifyBase<ModifyDerive<BSMenuLayer, MenuLayer>>::setHookPriorityAfterPost(hook, overcharged);
                 }
