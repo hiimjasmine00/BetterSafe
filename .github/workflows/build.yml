@@ -41,7 +41,6 @@ jobs:
       - name: Build the mod
         uses: hiimjasmine00/build-geode-mod@xwin
         with:
-          sdk: nightly
           build-config: ${{ matrix.config.build-config || 'Release' }}
           export-pdb: true
           export-symbols: true

@@ -17,6 +17,9 @@ protected:
     CCMenuItemSpriteExtra* m_nextButton;
 
     bool init(BSCalendarPopup*, SelectMonthCallback);
+    void onPrevYear(cocos2d::CCObject*);
+    void onNextYear(cocos2d::CCObject*);
+    void onMonth(cocos2d::CCObject*);
     void page(int);
 public:
     static constexpr std::array months = {

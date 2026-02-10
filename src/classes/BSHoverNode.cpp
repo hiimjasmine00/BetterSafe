@@ -29,6 +29,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
 
     CCTouchDispatcher::get()->registerForcePrio(this, 2);
 
+    m_level = gameLevel;
     m_callback = std::move(callback);
 
     auto background = NineSlice::create("square02_001.png");
@@ -51,32 +52,23 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     viewMenu->setID("view-menu");
     addChild(viewMenu);
 
-    auto closeButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_closeBtn_001.png", 0.5f, [this](auto) {
-        close();
-    });
+    auto closeSprite = CCSprite::createWithSpriteFrameName("GJ_closeBtn_001.png");
+    closeSprite->setScale(0.5f);
+    auto closeButton = CCMenuItemSpriteExtra::create(closeSprite, this, menu_selector(BSHoverNode::onClose));
     closeButton->setPosition({ -40.0f, 50.0f });
     closeButton->setID("close-button");
     viewMenu->addChild(closeButton, 1);
 
     auto nameLabel = CCLabelBMFont::create(gameLevel->m_levelName.c_str(), "bigFont.fnt");
     nameLabel->setScale(0.5f);
-    auto nameButton = CCMenuItemExt::createSpriteExtra(nameLabel, [this, gameLevel](auto) {
-        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder()) {
-            GameLevelManager::get()->gotoLevelPage(gameLevel);
-        }
-    });
+    auto nameButton = CCMenuItemSpriteExtra::create(nameLabel, this, menu_selector(BSHoverNode::onName));
     nameButton->setPosition({ 0.0f, 35.0f });
     nameButton->setID("name-button");
     viewMenu->addChild(nameButton);
 
     auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", JASMINE_STRING(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
     creatorLabel->setScale(0.4f);
-    auto creatorButton = CCMenuItemExt::createSpriteExtra(creatorLabel, [this, gameLevel](auto) {
-        auto accountID = gameLevel->m_accountID.value();
-        if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0) {
-            ProfilePage::create(accountID, false)->show();
-        }
-    });
+    auto creatorButton = CCMenuItemSpriteExtra::create(creatorLabel, this, menu_selector(BSHoverNode::onCreator));
     creatorButton->setPosition({ 0.0f, 23.0f });
     creatorButton->setID("creator-button");
     viewMenu->addChild(creatorButton);
@@ -134,15 +126,28 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     return true;
 }
 
-void BSHoverNode::close() {
+void BSHoverNode::onClose(CCObject* sender) {
     setTouchEnabled(false);
     setKeypadEnabled(false);
     removeFromParent();
     m_callback();
 }
 
+void BSHoverNode::onName(CCObject* sender) {
+    if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder()) {
+        GameLevelManager::get()->gotoLevelPage(m_level);
+    }
+}
+
+void BSHoverNode::onCreator(CCObject* sender) {
+    auto accountID = m_level->m_accountID.value();
+    if (CCScene::get()->getHighestChildZ() <= getParent()->getParent()->getZOrder() && accountID > 0) {
+        ProfilePage::create(accountID, false)->show();
+    }
+}
+
 void BSHoverNode::keyBackClicked() {
-    close();
+    onClose(nullptr);
 }
 
 void BSHoverNode::registerWithTouchDispatcher() {

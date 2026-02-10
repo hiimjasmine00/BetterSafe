@@ -23,5 +23,6 @@ namespace BetterSafe {
         GJTimedLevelType type, geode::async::TaskHolder<geode::utils::web::WebResponse>& listener,
         geode::Function<void()> success, geode::Function<void(int)> failure
     );
-    std::vector<SafeLevel> getMonth(int year, int month, GJTimedLevelType type);
+    int getDays(int year, int month);
+    std::vector<SafeLevel*> getMonth(int year, int month, GJTimedLevelType type);
 }

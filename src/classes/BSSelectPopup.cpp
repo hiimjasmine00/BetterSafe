@@ -41,28 +41,23 @@ bool BSSelectPopup::init(BSCalendarPopup* popup, SelectMonthCallback callback) {
         auto month = i + 1;
         auto monthLabel = CCLabelBMFont::create(months[i], "bigFont.fnt");
         monthLabel->limitLabelWidth(65.0f, 1.0f, 0.0f);
-        auto monthButton = CCMenuItemExt::createSpriteExtra(monthLabel, [this, month](auto) {
-            m_callback(m_year, month);
-            onClose(nullptr);
-        });
+        auto monthButton = CCMenuItemSpriteExtra::create(monthLabel, this, menu_selector(BSSelectPopup::onMonth));
         monthButton->setPosition({ (i % 4) * 70.0f + 50.0f, 100.0f - floorf(i / 4.0f) * 35.0f });
+        monthButton->setTag(month);
         monthButton->setID(fmt::format("month-button-{}", month));
         m_buttonMenu->addChild(monthButton);
         m_buttons.push_back(monthButton);
     }
 
-    m_prevButton = CCMenuItemExt::createSpriteExtraWithFrameName("GJ_arrow_03_001.png", 1.0f, [this, popup](auto) {
-        if (m_year > m_minYear) page(m_year - 1);
-    });
+    auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
+    m_prevButton = CCMenuItemSpriteExtra::create(prevSprite, this, menu_selector(BSSelectPopup::onPrevYear));
     m_prevButton->setPosition({ -34.5f, 75.0f });
     m_prevButton->setID("prev-button");
     m_buttonMenu->addChild(m_prevButton);
 
     auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
     nextSprite->setFlipX(true);
-    m_nextButton = CCMenuItemExt::createSpriteExtra(nextSprite, [this, popup](auto) {
-        if (m_year < m_maxYear) page(m_year + 1);
-    });
+    m_nextButton = CCMenuItemSpriteExtra::create(nextSprite, this, menu_selector(BSSelectPopup::onNextYear));
     m_nextButton->setPosition({ 334.5f, 75.0f });
     m_nextButton->setID("next-button");
     m_buttonMenu->addChild(m_nextButton);
@@ -71,6 +66,19 @@ bool BSSelectPopup::init(BSCalendarPopup* popup, SelectMonthCallback callback) {
     handleTouchPriority(this);
 
     return true;
+}
+
+void BSSelectPopup::onPrevYear(cocos2d::CCObject* sender) {
+    if (m_year > m_minYear) page(m_year - 1);
+}
+
+void BSSelectPopup::onNextYear(cocos2d::CCObject* sender) {
+    if (m_year < m_maxYear) page(m_year + 1);
+}
+
+void BSSelectPopup::onMonth(cocos2d::CCObject* sender) {
+    m_callback(m_year, sender->getTag());
+    onClose(nullptr);
 }
 
 void BSSelectPopup::page(int year) {

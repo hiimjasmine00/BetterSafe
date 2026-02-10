@@ -5,6 +5,7 @@
 class BSCalendarPopup : public geode::Popup, public LevelManagerDelegate {
 protected:
     geode::async::TaskHolder<geode::utils::web::WebResponse> m_listener;
+    std::vector<std::pair<SafeLevel*, GJGameLevel*>> m_levels;
     GJTimedLevelType m_type;
     int m_year;
     int m_minYear;
@@ -25,9 +26,15 @@ protected:
     bool m_initialized;
 
     bool init(cocos2d::CCObject*, cocos2d::SEL_MenuHandler, GJTimedLevelType);
-
+    void onPrevMonth(cocos2d::CCObject*);
+    void onNextMonth(cocos2d::CCObject*);
+    void onFirstMonth(cocos2d::CCObject*);
+    void onLastMonth(cocos2d::CCObject*);
+    void onMonth(cocos2d::CCObject*);
+    void onRefresh(cocos2d::CCObject*);
+    void onLevel(cocos2d::CCObject*);
     void closeHoverNode();
-    void createHoverNode(CCMenuItemSpriteExtra*, const SafeLevel&, GJGameLevel*);
+    void createHoverNode(CCMenuItemSpriteExtra*, SafeLevel*, GJGameLevel*);
     void loadMonth(int, int, bool = false);
     void loadSafe(bool = false);
     void setupMonth(cocos2d::CCArray*);
