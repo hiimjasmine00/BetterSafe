@@ -170,6 +170,7 @@ void BSCalendarPopup::onMonth(CCObject* sender) {
 void BSCalendarPopup::onRefresh(CCObject* sender) {
     m_loadingCircle->setVisible(true);
     closeHoverNode();
+    m_levels.clear();
     m_calendarMenu->removeAllChildren();
     m_prevButton->setVisible(false);
     m_nextButton->setVisible(false);
@@ -187,7 +188,7 @@ void BSCalendarPopup::onLevel(CCObject* sender) {
         m_hoverNode->onClose(nullptr);
         if (year == m_year && month == m_month && d == day) return;
     }
-    auto [safeLevel, gameLevel] = m_levels[sender->getTag()];
+    auto [safeLevel, gameLevel] = m_levels[d - 1];
     createHoverNode(static_cast<CCMenuItemSpriteExtra*>(sender), safeLevel, gameLevel);
     m_currentDay.year = m_year;
     m_currentDay.month = m_month;
@@ -237,6 +238,7 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     m_month = month;
 
     closeHoverNode();
+    m_levels.clear();
     m_calendarMenu->removeAllChildren();
     m_monthLabel->setString(fmt::format("{} {}", BSSelectPopup::months[m_month - 1], m_year).c_str());
     m_monthButton->updateSprite();
@@ -250,12 +252,14 @@ void BSCalendarPopup::loadMonth(int year, int month, bool refresh) {
     if (levelSafe.empty()) return setupMonth(nullptr);
 
     std::set<int> levelIDs;
-    for (auto level : levelSafe) {
-        levelIDs.insert(level->levelID);
+    for (int i = 0; i < levelSafe.size(); i++) {
+        if (auto level = levelSafe[i]) {
+            levelIDs.insert(level->levelID);
+        }
     }
 
-    auto searchObject = GJSearchObject::create(SearchType::Type19);
-    geode::utils::StringBuffer searchQuery;
+    auto searchObject = GJSearchObject::create(SearchType::MapPackOnClick);
+    StringBuffer searchQuery;
     for (auto it = levelIDs.begin(); it != levelIDs.end(); ++it) {
         if (it != levelIDs.begin()) searchQuery.append(',');
         searchQuery.append(fmt::to_string(*it));
@@ -307,7 +311,7 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
 
     std::unordered_map<int, GJGameLevel*> levelMap;
     for (auto level : CCArrayExt<GJGameLevel*>(levels)) {
-        levelMap[level->m_levelID.value()] = level;
+        levelMap.emplace(level->m_levelID.value(), level);
     }
 
     constexpr std::array daysPerMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -327,13 +331,19 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
     auto sfc = CCSpriteFrameCache::get();
 
     for (int i = 0; i < daysInMonth; i++) {
-        auto d = i + 1;
         auto safeLevel = levelSafe[i];
+        if (!safeLevel) {
+            m_levels.emplace_back(nullptr, nullptr);
+            continue;
+        }
 
         auto levelIt = levelMap.find(safeLevel->levelID);
-        if (levelIt == levelMap.end()) continue;
-        auto level = levelIt->second;
+        if (levelIt == levelMap.end()) {
+            m_levels.emplace_back(safeLevel, nullptr);
+            continue;
+        }
 
+        auto level = levelIt->second;
         m_levels.emplace_back(safeLevel, level);
 
         auto completedLevel = showCheckmarks && GameStatsManager::get()->hasCompletedLevel(level);
@@ -411,6 +421,8 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             }
             diffNode->addChild(child);
         }
+
+        auto d = i + 1;
 
         if (completedLevel) {
             auto completedIcon = CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
