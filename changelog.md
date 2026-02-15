@@ -1,5 +1,5 @@
 # Better Safe Changelog
-## v1.2.4 (2026-02-08)
+## v1.2.4 (2026-02-14)
 - Ported to Geometry Dash v2.208 / Geode SDK v5.0.0
 
 ## v1.2.3 (2025-10-20)
