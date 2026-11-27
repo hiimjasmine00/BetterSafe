@@ -1,5 +1,5 @@
 #include "../BetterSafe.hpp"
-#include <cocos2d.h>
+#include <Geode/cocos/layers_scenes_transitions_nodes/CCLayer.h>
 
 using HoverCallback = geode::Function<void()>;
 

@@ -27,7 +27,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     setID("BSHoverNode");
     ignoreAnchorPointForPosition(false);
 
-    CCTouchDispatcher::get()->registerForcePrio(this, 2);
+    CCTouchDispatcher::get()->registerForcePrio(this, 2, 0);
 
     m_level = gameLevel;
     m_callback = std::move(callback);
@@ -66,7 +66,7 @@ bool BSHoverNode::init(const SafeLevel& level, GJGameLevel* gameLevel, HoverCall
     nameButton->setID("name-button");
     viewMenu->addChild(nameButton);
 
-    auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", JASMINE_STRING(gameLevel->m_creatorName)).c_str(), "goldFont.fnt");
+    auto creatorLabel = CCLabelBMFont::create(fmt::format("by {}", gameLevel->m_creatorName).c_str(), "goldFont.fnt");
     creatorLabel->setScale(0.4f);
     auto creatorButton = CCMenuItemSpriteExtra::create(creatorLabel, this, menu_selector(BSHoverNode::onCreator));
     creatorButton->setPosition({ 0.0f, 23.0f });

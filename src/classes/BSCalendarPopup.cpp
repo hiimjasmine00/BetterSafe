@@ -5,6 +5,8 @@
 #include <Geode/binding/GJDifficultySprite.hpp>
 #include <Geode/binding/GJGameLevel.hpp>
 #include <Geode/binding/LoadingCircle.hpp>
+#include <Geode/cocos/misc_nodes/CCClippingNode.h>
+#include <Geode/cocos/particle_nodes/CCParticleSystem.h>
 #include <Geode/loader/Mod.hpp>
 #include <jasmine/level.hpp>
 #include <jasmine/search.hpp>
@@ -380,23 +382,30 @@ void BSCalendarPopup::setupMonth(CCArray* levels) {
             }
         }
 
-        if (enableDifficulties && safeLevel->tier > 0) {
-            constexpr std::array difficulties = {
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15,
-                16, 17, 18, 19, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
-            };
-            constexpr std::array<CCPoint, 21> positions = {
-                CCPoint { 0.0f, 0.0f },
-                { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, -0.25f },
-                { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, 0.5f }, { -0.125f, 0.5f }, { -0.125f, 0.25f },
-                { -0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.0f, 0.5f },
-                { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }
-            };
-            if (safeLevel->tier < difficulties.size()) {
-                auto diff = difficulties[safeLevel->tier];
-                diffFrame = fmt::format("hiimjustin000.demons_in_between/DIB_{:02}{}_btn_001.png",
-                    diff, enableLegendary && featureState == 3 ? "_4" : enableMythic && featureState == 4 ? "_5" : "");
-                diffPos += positions[diff];
+        if (enableDifficulties) {
+            auto tierIt = BetterSafe::gddl.find(safeLevel->levelID);
+            if (tierIt != BetterSafe::gddl.end()) {
+                auto tier = tierIt->second.tier;
+
+                constexpr std::array difficulties = {
+                    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 12, 13, 14, 14, 15, 15, 16, 17, 18, 19, 20,
+                    21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29
+                };
+                constexpr std::array<CCPoint, 31> positions = {
+                    CCPoint { 0.0f, 0.0f },
+                    { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, -0.25f },
+                    { -0.125f, -0.25f }, { -0.125f, -0.375f }, { -0.125f, 0.5f }, { -0.125f, 0.5f }, { -0.125f, 0.25f },
+                    { -0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.125f, 0.5f }, { 0.0f, 0.5f },
+                    { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.125f }, { 0.0f, 1.125f }, { 0.0f, 1.125f },
+                    { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.25f },
+                    { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.25f }, { 0.0f, 1.75f }
+                };
+                if (tier < difficulties.size()) {
+                    auto diff = difficulties[tier];
+                    diffFrame = fmt::format("hiimjustin000.demons_in_between/DIB_{:02}{}_btn_001.png",
+                        diff, enableLegendary && featureState == 3 ? "_4" : enableMythic && featureState == 4 ? "_5" : "");
+                    diffPos += positions[diff];
+                }
             }
         }
 

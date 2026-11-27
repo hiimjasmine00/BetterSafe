@@ -1,4 +1,5 @@
 #include "BetterSafe.hpp"
+#include <Geode/loader/ModEvent.hpp>
 #include <jasmine/web.hpp>
 
 using namespace geode::prelude;
@@ -14,6 +15,42 @@ std::map<GJTimedLevelType, std::vector<SafeLevel>> BetterSafe::safes = {
     { GJTimedLevelType::Weekly, {} },
     { GJTimedLevelType::Event, {} }
 };
+
+std::map<int, LadderDemon> BetterSafe::gddl = {};
+
+$on_mod(Loaded) {
+    DemonsInBetweenLoadedEvent().listen([](const std::map<int, LadderDemon>& gddl) {
+        BetterSafe::gddl = gddl;
+    }).leak();
+}
+
+time_t toTimestamp(std::string date) {
+    auto parts = string::split(date, '-');
+    if (parts.size() != 3) return 0;
+
+    auto yearRes = numFromString<uint16_t>(parts[0]);
+    auto monthRes = numFromString<uint8_t>(parts[1]);
+    auto dayRes = numFromString<uint8_t>(parts[2]);
+    if (!yearRes.isOk() || !monthRes.isOk() || !dayRes.isOk()) return 0;
+
+    auto year = yearRes.unwrap();
+    auto month = monthRes.unwrap();
+    auto day = dayRes.unwrap();
+
+    tm timeinfo = {};
+    timeinfo.tm_year = year - 1900;
+    timeinfo.tm_mon = month - 1;
+    timeinfo.tm_mday = day;
+    timeinfo.tm_hour = 0;
+    timeinfo.tm_min = 0;
+    timeinfo.tm_sec = 0;
+
+    #ifdef GEODE_IS_WINDOWS
+    return _mkgmtime(&timeinfo);
+    #else
+    return timegm(&timeinfo);
+    #endif
+}
 
 void BetterSafe::loadSafe(GJTimedLevelType type, TaskHolder<web::WebResponse>& listener, Function<void()> success, Function<void(int)> failure) {
     if (!safes[type].empty()) return success();
@@ -31,33 +68,35 @@ void BetterSafe::loadSafe(GJTimedLevelType type, TaskHolder<web::WebResponse>& l
                 auto levelID = value.get<int>("levelID");
                 if (!levelID.isOk()) continue;
 
-                auto dates = value.get<std::vector<matjson::Value>>("dates").map([](const std::vector<matjson::Value>& v) {
-                    std::vector<SafeDate> dates;
-                    for (auto& value : v) {
-                        auto& date = dates.emplace_back();
-                        if (auto str = value.asString()) {
-                            auto split = string::splitView(str.unwrap(), "-");
-                            if (split.size() >= 3) {
-                                if (auto year = numFromString<int>(split[0])) {
-                                    date.year = year.unwrap();
-                                }
-                                if (auto month = numFromString<int>(split[1])) {
-                                    date.month = month.unwrap();
-                                }
-                                if (auto day = numFromString<int>(split[2])) {
-                                    date.day = day.unwrap();
-                                }
-                            }
-                        }
+                auto startDateRes = value.get("startDate");
+                if (!startDateRes.isOk()) continue;
+
+                auto endDateRes = value.get("endDate");
+                if (!endDateRes.isOk()) continue;
+
+                auto startDate = startDateRes.unwrap();
+                auto endDate = endDateRes.unwrap();
+
+                std::vector<SafeDate> dates;
+                if (startDate.isString() && endDate.isString()) {
+                    auto startTimestamp = toTimestamp(startDate.asString().unwrap());
+                    auto endTimestamp = toTimestamp(endDate.asString().unwrap());
+
+                    if (startTimestamp == 0 || endTimestamp == 0) continue;
+
+                    for (auto timestamp = startTimestamp; timestamp <= endTimestamp; timestamp += 86400) {
+                        tm timeinfo = {};
+                        #ifdef GEODE_IS_WINDOWS
+                        gmtime_s(&timeinfo, &timestamp);
+                        #else
+                        gmtime_r(&timestamp, &timeinfo);
+                        #endif
+
+                        dates.emplace_back((uint16_t)(timeinfo.tm_year + 1900), (uint8_t)(timeinfo.tm_mon + 1), (uint8_t)(timeinfo.tm_mday));
                     }
-                    return dates;
-                });
-                if (!dates.isOk()) continue;
+                }
 
-                auto tier = value.get<int>("tier");
-                if (!tier.isOk()) continue;
-
-                safe.emplace_back(id.unwrap(), levelID.unwrap(), dates.unwrap(), type, tier.unwrap());
+                safe.emplace_back(id.unwrap(), levelID.unwrap(), std::move(dates), type);
             }
 
             success();
